@@ -4,7 +4,7 @@
 
 Built for **Indonesia Web3 Hackathon 2026** on **BNB Smart Chain** · Tracks: **AI Agents · Finance & Commerce · Consumer Apps**
 
-> Live demo: **`<APP_URL>`** · Try to break the AI: **`<APP_URL>/redteam`** · Telegram bot: **[@WarungAgenttBot](https://t.me/WarungAgenttBot)** · Demo video: **`<VIDEO_URL>`**
+> Live demo: **https://warung-agent.vercel.app** · Try to break the AI: **https://warung-agent.vercel.app/redteam** · Telegram bot: **[@WarungAgenttBot](https://t.me/WarungAgenttBot)** · Demo video: **`<VIDEO_URL>`**
 
 ---
 
@@ -62,7 +62,7 @@ LLMs hallucinate and can be jailbroken, so **nothing the AI says is trusted**. S
 | 4 | **Reply guard:** every figure in the AI's final message must already appear in a tool result, otherwise the model must rewrite | The AI inventing or miscalculating numbers in chat | [agent.ts](bot/src/agent.ts) |
 | + | **Consent comes from the chain:** the accept page shows terms read from the contract. The merchant is fixed by code, so no tool lets the model retarget a loan | Misleading chat text, prompt-injected retargeting | [app/loan/[id]](app/app/loan/%5Bid%5D/page.tsx) |
 
-**Attack it yourself:** [`/redteam`](#) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
+**Attack it yourself:** [`/redteam`](https://warung-agent.vercel.app/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
 
 ```mermaid
 flowchart LR
