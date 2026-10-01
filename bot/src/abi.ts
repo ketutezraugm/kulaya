@@ -1,0 +1,78 @@
+import { parseAbi } from "viem";
+
+export const warungAbi = parseAbi([
+  "function register()",
+  "function pay(address merchant, uint256 amount, string memo)",
+  "function deposit(uint256 amount) returns (uint256)",
+  "function withdraw(uint256 sharesIn) returns (uint256)",
+  "function proposeLoan(address merchant, uint256 principal, uint256 feeBps, uint256 repayBps, bytes32 reasonHash) returns (uint256)",
+  "function acceptLoan(uint256 loanId)",
+  "function markLate(uint256 loanId)",
+  "function reportOutcome(uint256 loanId)",
+  "function registerFor(address merchant, uint256 deadline, bytes sig)",
+  "function payFor(address payer, address merchant, uint256 amount, string memo, uint256 deadline, bytes sig, uint256 permitDeadline, uint8 v, bytes32 r, bytes32 s)",
+  "function acceptLoanFor(uint256 loanId, uint256 deadline, bytes sig)",
+  "function relayNonces(address) view returns (uint256)",
+  "function reported(uint256) view returns (bool)",
+  "function creditLimit(address merchant) view returns (uint256)",
+  "function trailingRevenue(address merchant) view returns (uint256)",
+  "function currentEpoch() view returns (uint256)",
+  "function tierMax(uint8 tier) view returns (uint256)",
+  "function totalAssets() view returns (uint256)",
+  "function idle() view returns (uint256)",
+  "function loanedOut() view returns (uint256)",
+  "function reserve() view returns (uint256)",
+  "function totalShares() view returns (uint256)",
+  "function shares(address) view returns (uint256)",
+  "function nextLoanId() view returns (uint256)",
+  "function epochRevenue(address merchant, uint256 epoch) view returns (uint256)",
+  "function merchants(address) view returns (bool registered, bool defaulted, uint8 tier, uint32 payers, uint256 loanId)",
+  "function loans(uint256) view returns (address merchant, uint8 status, uint16 repayBps, uint128 principal, uint128 total, uint128 repaid, uint64 proposedAt, uint64 acceptedAt, uint64 lastSaleAt, bytes32 reasonHash)",
+  "function p() view returns (uint64 epochLength, uint64 lateAfter, uint64 proposalTtl, uint8 lookbackEpochs, uint8 minPayers, uint16 maxLoanBps, uint16 maxFeeBps, uint16 maxRepayBps, uint16 exposureBps, uint16 dailyBudgetBps, uint16 reserveBps, uint128 payerEpochCap, uint128 minPayment, uint128 baseTierMax)",
+  "event MerchantRegistered(address indexed merchant)",
+  "event Sale(address indexed merchant, address indexed payer, uint256 amount, uint256 repaidCut, string memo, uint256 epoch)",
+  "event LoanProposed(uint256 indexed loanId, address indexed merchant, uint256 principal, uint256 feeBps, uint256 repayBps, bytes32 reasonHash)",
+  "event LoanAccepted(uint256 indexed loanId, address indexed merchant, uint256 principal)",
+  "event LoanRepaid(uint256 indexed loanId, address indexed merchant)",
+  "event LoanDefaulted(uint256 indexed loanId, address indexed merchant, uint256 loss)",
+  // custom errors, so viem can decode revert reasons by name (used by /redteam)
+  "error NotRegistered()",
+  "error AlreadyRegistered()",
+  "error BadPayment()",
+  "error MemoTooLong()",
+  "error OpenLoanExists()",
+  "error MerchantDefaulted()",
+  "error TooFewPayers(uint256 have, uint256 need)",
+  "error ExceedsCreditCap(uint256 requested, uint256 cap)",
+  "error ExceedsExposure(uint256 requested, uint256 cap)",
+  "error FeeTooHigh(uint256 feeBps, uint256 max)",
+  "error RepayBpsOutOfRange(uint256 repayBps, uint256 max)",
+  "error NotMerchant()",
+  "error NotProposed()",
+  "error NotActive()",
+  "error Expired()",
+  "error InsufficientLiquidity()",
+  "error DailyBudgetExceeded()",
+  "error NotLate()",
+  "error ZeroAmount()",
+  "error NotClosed()",
+  "error SignatureExpired()",
+  "error BadSignature()",
+  "error AlreadyReported()",
+  "error EnforcedPause()",
+  "error AccessControlUnauthorizedAccount(address account, bytes32 neededRole)",
+]);
+
+export const erc20Abi = parseAbi([
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function mint(address to, uint256 amount)",
+]);
+
+export const reputationAbi = parseAbi([
+  "function getSummary(uint256 agentId, address[] clientAddresses, string tag1, string tag2) view returns (uint64 count, int128 summaryValue, uint8 summaryValueDecimals)",
+]);
+
+export const LOAN_STATUS = ["None", "Proposed", "Active", "Repaid", "Defaulted"] as const;
+export type LoanStatus = (typeof LOAN_STATUS)[number];
