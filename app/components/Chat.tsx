@@ -13,7 +13,7 @@ const SUGGESTIONS = ["Berapa penjualan saya hari ini?", "Saya mau pinjam modal",
 /** The same AI agent as on Telegram, in the browser. Needs a wallet sign-in so it only ever talks about the signer's own shop. */
 export function Chat({ account, wallet, inject, onActivity }: { account: Address; wallet: Wallet | null; inject?: { n: number; text: string }; onActivity: () => void }) {
   const [token, setToken] = useState<string | null>(null);
-  const [items, setItems] = useState<Item[]>([{ who: "ai", text: "Halo! Saya asisten Warung Agent. Tanya penjualan, minta QR pembayaran, atau ajukan modal usaha: saya jawab dari data on-chain toko Anda." }]);
+  const [items, setItems] = useState<Item[]>([{ who: "ai", text: "Halo! Saya asisten Kulaya. Tanya penjualan, minta QR pembayaran, atau ajukan modal usaha: saya jawab dari data on-chain toko Anda." }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");

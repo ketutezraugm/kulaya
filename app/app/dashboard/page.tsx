@@ -6,6 +6,7 @@ import { QrCard } from "@/components/QrCard";
 import { RelayUnavailable, gaslessRegister } from "@/lib/gasless";
 import { dayLabel, sumUnits, useShop } from "@/lib/shop";
 import { WARUNG, warungAbi, errText, rupiah, short, txLink, useWallet, write } from "@/lib/web3";
+import { TG_URL } from "@/lib/brand";
 
 const DEMO = process.env.NEXT_PUBLIC_DEMO_MERCHANT;
 
@@ -54,7 +55,7 @@ export default function Dashboard() {
         <div className="card">
           <button onClick={connect}>Connect your shop wallet</button>
           {error && <p className="bad">{error}</p>}
-          <p className="sub" style={{ margin: "10px 0 0" }}>New here? Register your shop for free after connecting: it's gasless. You can also use the <a href="https://t.me/WarungAgenttBot">Telegram bot</a> with the same wallet.</p>
+          <p className="sub" style={{ margin: "10px 0 0" }}>New here? Register your shop for free after connecting: it's gasless. You can also use the <a href={TG_URL}>Telegram bot</a> with the same wallet.</p>
         </div>
         {DEMO && <p className="sub">Just looking? <a href={`/m/${DEMO}`}>See a live demo shop</a>.</p>}
       </>
@@ -166,7 +167,7 @@ export default function Dashboard() {
       <h2 id="assistant">Assistant</h2>
       <Chat account={account} wallet={wallet} inject={inject} onActivity={reload} />
 
-      <p className="sub" style={{ marginTop: 20 }}>Prefer chat on your phone? Use the same wallet in the <a href="https://t.me/WarungAgenttBot">Telegram bot</a>. <a href={`/m/${account}`}>Share your public page</a> to show customers and lenders your verified track record.</p>
+      <p className="sub" style={{ marginTop: 20 }}>Prefer chat on your phone? Use the same wallet in the <a href={TG_URL}>Telegram bot</a>. <a href={`/m/${account}`}>Share your public page</a> to show customers and lenders your verified track record.</p>
     </>
   );
 }

@@ -23,7 +23,7 @@ function build(): Bot {
 
   b.command("start", async (ctx) => {
     const tg = String(ctx.from?.id);
-    await ctx.reply("Halo! Saya Warung Agent 👋\nCatat penjualan, terima pembayaran QR, dan dapatkan modal usaha tanpa agunan: cukup ngobrol dengan saya (teks atau voice note).");
+    await ctx.reply("Halo! Saya Kulaya 👋\nCatat penjualan, terima pembayaran QR, dan dapatkan modal usaha tanpa agunan: cukup ngobrol dengan saya (teks atau voice note).");
     if (!(await store.linkedAddress(tg))) { const l = await linkPrompt(tg); await ctx.reply(l.text, { reply_markup: l.kb }); }
     else await ctx.reply("Dompet Anda sudah terhubung. Coba tanya: \"Gimana penjualan saya minggu ini?\"");
   });

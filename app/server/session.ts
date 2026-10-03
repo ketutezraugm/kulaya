@@ -10,7 +10,7 @@ import { kv } from "./kv";
 const TTL_SEC = 12 * 3600;
 const b64 = (b: Buffer) => b.toString("base64url");
 
-export const challengeMessage = (address: string, nonce: string) => `Sign in to Warung Agent\nAddress: ${address.toLowerCase()}\nNonce: ${nonce}`;
+export const challengeMessage = (address: string, nonce: string) => `Sign in to Kulaya\nAddress: ${address.toLowerCase()}\nNonce: ${nonce}`;
 
 export async function newChallenge(address: string) {
   const nonce = randomBytes(16).toString("hex");

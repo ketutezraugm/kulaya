@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const Body = z.object({ code: z.string().regex(/^[0-9a-f]{12}$/), address: z.string().regex(/^0x[0-9a-fA-F]{40}$/), signature: z.string().regex(/^0x[0-9a-fA-F]+$/) });
-const linkMessage = (code: string) => `Link Warung Agent Telegram: ${code}`;
+const linkMessage = (code: string) => `Link Kulaya Telegram: ${code}`;
 
 export async function POST(req: Request) {
   try {

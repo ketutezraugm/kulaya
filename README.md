@@ -1,10 +1,12 @@
-# 🏪 Warung Agent
+# 🏪 Kulaya
 
-**Fair credit for Indonesia's 64 million small shops. The AI proposes, the smart contract decides.**
+**Modal usaha, langsung dari hasil jualanmu.** Fair credit for Indonesia's 64 million small shops. The AI proposes, the smart contract decides.
+
+*Kulaya* is a coined name, from *kulakan* (buying stock to sell), the very thing small sellers borrow for.
 
 Built for **Indonesia Web3 Hackathon 2026** on **BNB Smart Chain** · Tracks: **AI Agents · Finance & Commerce · Consumer Apps**
 
-> Live demo: **https://warung-agent.vercel.app** · Try to break the AI: **https://warung-agent.vercel.app/redteam** · Telegram bot: **[@WarungAgenttBot](https://t.me/WarungAgenttBot)** · Demo video: **`<VIDEO_URL>`**
+> Live demo: **https://kulaya.vercel.app** · Try to break the AI: **https://kulaya.vercel.app/redteam** · Telegram bot: **[@WarungAgenttBot](https://t.me/WarungAgenttBot)** · Demo video: **`<VIDEO_URL>`**
 
 ---
 
@@ -14,7 +16,7 @@ Most Indonesian *warung* owners and small sellers (UMKM) have no formal credit h
 
 ## The solution
 
-Warung Agent turns everyday QR payments into a **tamper-proof, shop-owned revenue record on-chain**, then uses an AI underwriter to offer **collateral-free micro-loans from a public pool**. The loan is repaid **automatically as a small share of each sale**, enforced by the smart contract. There are no due dates, no penalties and no debt collectors.
+Kulaya turns everyday QR payments into a **tamper-proof, shop-owned revenue record on-chain**, then uses an AI underwriter to offer **collateral-free micro-loans from a public pool**. The loan is repaid **automatically as a small share of each sale**, enforced by the smart contract. There are no due dates, no penalties and no debt collectors.
 
 1. **Sell:** customers scan a QR and pay in an IDR stablecoin. Every payment is recorded on-chain.
 2. **Get an offer:** the owner chats with the AI in Bahasa on Telegram (text or voice). The AI reads the verified sales and proposes terms.
@@ -62,7 +64,7 @@ LLMs hallucinate and can be jailbroken, so **nothing the AI says is trusted**. S
 | 4 | **Reply guard:** every figure in the AI's final message must already appear in a tool result, otherwise the model must rewrite | The AI inventing or miscalculating numbers in chat | [agent.ts](app/server/agent.ts) |
 | + | **Consent comes from the chain:** the accept page shows terms read from the contract. The merchant is fixed by code, so no tool lets the model retarget a loan | Misleading chat text, prompt-injected retargeting | [app/loan/[id]](app/app/loan/%5Bid%5D/page.tsx) |
 
-**Attack it yourself:** [`/redteam`](https://warung-agent.vercel.app/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
+**Attack it yourself:** [`/redteam`](https://kulaya.vercel.app/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
 
 ```mermaid
 flowchart LR
@@ -91,9 +93,11 @@ Owners and customers **never need BNB**. They sign EIP-712 messages (`registerFo
 
 ## Deployed contracts (BNB Smart Chain **testnet**, chain id 97)
 
+> The product was named Kulaya late in the build. The contracts were already deployed under their original code name `Warung` (wallets show "Warung" when signing); everything user-facing is Kulaya.
+
 | Contract | Address |
 |---|---|
-| **Warung** | [`0xF6fD0727D20eD76442BfD16727fA4ce1482321D8`](https://testnet.bscscan.com/address/0xF6fD0727D20eD76442BfD16727fA4ce1482321D8) |
+| **Kulaya core contract** (`Warung.sol`) | [`0xF6fD0727D20eD76442BfD16727fA4ce1482321D8`](https://testnet.bscscan.com/address/0xF6fD0727D20eD76442BfD16727fA4ce1482321D8) |
 | MockIDRX (testnet stand-in for IDRX, 2 decimals) | [`0x6CD5aDaA626A96F88a3577aEa22c540Cdc99e527`](https://testnet.bscscan.com/address/0x6CD5aDaA626A96F88a3577aEa22c540Cdc99e527) |
 | ReputationAdapter (posts loan outcomes to ERC-8004) | [`0x41dA930a8712A2799F3B87d7E6A29f6195C5214E`](https://testnet.bscscan.com/address/0x41dA930a8712A2799F3B87d7E6A29f6195C5214E) |
 | AI underwriter wallet (owner of ERC-8004 agent **#2535**) | [`0xA13B769d9b9777d49f73491379007dc4C2A1dc78`](https://testnet.bscscan.com/address/0xA13B769d9b9777d49f73491379007dc4C2A1dc78) |
@@ -120,7 +124,7 @@ app/         ONE Next.js project, deployed on Vercel
 Prerequisites: Node 22+, [Foundry](https://getfoundry.sh), a BSC testnet wallet with tBNB, a [Gemini API key](https://aistudio.google.com/apikey) (free tier), a Telegram bot token from @BotFather. Redis is optional locally (it falls back to memory).
 
 ```bash
-git clone --recurse-submodules https://github.com/ketutezraugm/warung-agent && cd warung-agent
+git clone --recurse-submodules https://github.com/ketutezraugm/kulaya && cd kulaya
 
 # 1. contracts
 cd contracts
@@ -158,7 +162,7 @@ The contract, the verified revenue record, the AI underwriter and its limits are
 
 ## Tech
 
-Solidity 0.8.28 · Foundry · OpenZeppelin 5 · ERC-8004 · EIP-712 / EIP-2612 · viem · Google Gemini (free tier) · grammY (Telegram webhook) · Next.js on Vercel · Upstash Redis · BNB Smart Chain testnet
+Solidity 0.8.28 · Foundry · OpenZeppelin 5 · ERC-8004 · EIP-712 / EIP-2612 · viem · Groq / Cerebras / Gemini free-tier LLMs with failover · grammY (Telegram webhook) · Next.js on Vercel · Upstash Redis · BNB Smart Chain testnet
 
 ## License
 

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { BOT_API, rupiah, short, WARUNG, IDRX, EXPLORER } from "@/lib/web3";
+import { BRAND, TAGLINE_ID, TG_URL } from "@/lib/brand";
 
 const DEMO = process.env.NEXT_PUBLIC_DEMO_MERCHANT;
 const ghost = { background: "transparent", color: "var(--ink)", border: "1px solid var(--line)" };
@@ -10,6 +11,7 @@ export default function Home() {
   useEffect(() => { fetch(`${BOT_API}/agent`).then((r) => r.json()).then(setAgent).catch(() => {}); }, []);
   return (
     <>
+      <p className="sub" style={{ margin: "0 0 4px", fontWeight: 600 }}>{BRAND} · {TAGLINE_ID}</p>
       <h1>Fair credit for 64 million small shops. The AI proposes, the contract decides.</h1>
       <p className="sub">
         Warung owners chat with an AI in Bahasa. Customers pay by QR in an IDR stablecoin, so every sale becomes a tamper-proof revenue record.
@@ -19,7 +21,7 @@ export default function Home() {
         <a className="btn" href="/dashboard">Open my shop dashboard</a>
         {DEMO && <a className="btn" style={ghost} href={`/m/${DEMO}`}>See a live shop</a>}
         <a className="btn" style={ghost} href="/redteam">Try to break the AI</a>
-        <a className="btn" style={ghost} href="https://t.me/WarungAgenttBot">Open the Telegram bot</a>
+        <a className="btn" style={ghost} href={TG_URL}>Open the Telegram bot</a>
       </div>
 
       <h2>How a loan works</h2>

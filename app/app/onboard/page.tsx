@@ -3,6 +3,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { gaslessRegister, RelayUnavailable } from "@/lib/gasless";
 import { BOT_API, WARUNG, warungAbi, warungRead, useWallet, write, errText, short } from "@/lib/web3";
+import { TG_URL } from "@/lib/brand";
 
 function Onboard() {
   const code = useSearchParams().get("code") ?? "";
@@ -26,14 +27,14 @@ function Onboard() {
         }
       }
       setStep("Sign to link this wallet to your Telegram (free, no gas)…");
-      const signature = await wallet.signMessage({ message: `Link Warung Agent Telegram: ${code}` });
+      const signature = await wallet.signMessage({ message: `Link Kulaya Telegram: ${code}` });
       const r = await fetch(`${BOT_API}/link`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code, address: account, signature }) });
       if (!r.ok) throw new Error((await r.json()).error ?? "link failed");
       setDone(true);
     } catch (e) { setErr(errText(e)); } finally { setStep(""); }
   }
 
-  if (!code) return <p>Open this page from the Telegram bot (<a href="https://t.me/WarungAgenttBot">/link</a>).</p>;
+  if (!code) return <p>Open this page from the Telegram bot (<a href={TG_URL}>/link</a>).</p>;
   return (
     <>
       <h1>Connect your shop wallet</h1>
