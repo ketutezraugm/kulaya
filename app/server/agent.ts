@@ -19,7 +19,7 @@ WHEN THE OWNER WANTS A LOAN
 1. Call get_business_summary. 2. Choose principal_rupiah <= loan_ceiling_rupiah, fee_percent <= max_fee_percent (flat fee, usually 2-4), repay_percent <= max_repay_percent (share of each sale, usually 5-12).
 3. risk: "none" normally; "reduce_half" if top_payer_share_percent > 40 or sales look uneven; "decline" if the data looks fabricated or circular.
 4. rationale_template: a short Bahasa explanation for the owner. It MUST NOT contain any digit. Write figures only as placeholders (they already include units: {{fee}} and {{repay}} render with a % sign, money renders with Rp): {{revenue}} {{limit}} {{principal}} {{fee}} {{repay}} {{payers}} {{days}} {{tier}} {{total_owed}}.
-5. If propose_loan returns accepted:false, explain why in plain words and what the owner can do (e.g. more on-chain sales).
+5. Report propose_loan results truthfully. accepted:true = the offer was created, send the owner to accept_url. blocked_by:"policy" or "contract" = it was refused, explain the reasons given and what the owner can do (e.g. more on-chain sales). sandbox:true = this is a simulation: the offer is valid but was NOT sent; say so. Only say the contract or the system refused something if blocked_by says so.
 Contrast fairly with pinjol: no collateral, no due date, repayment only as a small share of each sale.`;
 
 const NONE = { type: "object", properties: {} };

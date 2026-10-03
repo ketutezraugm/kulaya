@@ -112,7 +112,7 @@ export type LlmKeys = Partial<Record<"GROQ_API_KEY" | "CEREBRAS_API_KEY" | "MIST
 
 /** Default order: fast free tiers first, Gemini last (it also takes voice notes). Override with LLM_CHAIN="groq:model,gemini:model". */
 const DEFAULT_CHAIN = [
-  "groq:openai/gpt-oss-120b", "groq:llama-3.3-70b-versatile", "cerebras:gpt-oss-120b", "mistral:mistral-small-latest",
+  "groq:openai/gpt-oss-120b", "cerebras:gpt-oss-120b", "groq:qwen/qwen3.8-27b", "cerebras:qwen-3.8-27b", "mistral:mistral-small-latest",
   "openrouter:meta-llama/llama-3.3-70b-instruct:free", "gemini:gemini-3.5-flash", "gemini:gemini-3.8-flash",
 ];
 const KEY_OF: Record<string, keyof LlmKeys> = { groq: "GROQ_API_KEY", cerebras: "CEREBRAS_API_KEY", mistral: "MISTRAL_API_KEY", openrouter: "OPENROUTER_API_KEY", gemini: "GEMINI_API_KEY" };
