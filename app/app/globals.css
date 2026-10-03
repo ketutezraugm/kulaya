@@ -39,3 +39,19 @@ td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line
 pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-size: 13px; }
 .shield { border-left: 4px solid var(--line); padding: 8px 12px; margin: 8px 0; background: var(--card); border-radius: 0 8px 8px 0; }
 .shield.pass { border-color: var(--good); } .shield.block { border-color: var(--bad); }
+
+/* ── owner dashboard ── */
+.cols { display: grid; gap: 16px; grid-template-columns: 1.35fr 1fr; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+.chip-btn { padding: 4px 10px; font-size: 13px; border-radius: 999px; font-weight: 500; }
+.ghost-link { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.chat-log { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding: 4px 2px; }
+.msg { display: flex; flex-direction: column; gap: 6px; max-width: 88%; }
+.msg.me { align-self: flex-end; align-items: flex-end; }
+.msg.ai { align-self: flex-start; }
+.bubble { background: var(--chip); border-radius: 14px; padding: 9px 13px; white-space: pre-wrap; word-break: break-word; }
+.msg.me .bubble { background: var(--brand); color: var(--brand-ink); }
+.bubble.qr { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); }
+td:first-child { white-space: nowrap; }
+td.mono { white-space: nowrap; word-break: normal; }
+td:nth-child(2), td:nth-child(3) { white-space: nowrap; }

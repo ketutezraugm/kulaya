@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="wrap">
           <nav>
             <b>🏪 Warung Agent</b>
-            <a href="/">Home</a><a href="/pool">Lend</a><a href="/agent">The AI</a><a href="/redteam">Try to break it</a>
+            <a href="/">Home</a><a href="/dashboard">My shop</a><a href="/pool">Lend</a><a href="/agent">The AI</a><a href="/redteam">Try to break it</a>
           </nav>
           {children}
         </div>

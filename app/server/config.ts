@@ -27,6 +27,7 @@ const schema = z.object({
   APP_URL: z.string().url().default("http://localhost:3000"),
   REDTEAM_RATE_LIMIT: z.coerce.number().default(20),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
+  SESSION_SECRET: z.string().min(32).optional(), // signs dashboard sign-in tokens; web chat is disabled without it
   REDTEAM_MERCHANT: addr.optional(),
   PORT: z.coerce.number().default(8787),
 });

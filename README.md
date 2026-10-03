@@ -108,8 +108,8 @@ A complete real loan cycle has been run on-chain: the AI proposed Rp 800.000, th
 contracts/   Foundry. Warung.sol (credit + pool + relayed actions), ReputationAdapter.sol, MockIDRX.sol
              33 tests: unit, fuzz, stateful invariants, relay attack cases
 app/         ONE Next.js project, deployed on Vercel
-  app/         pages: shop dashboard, QR pay, loan acceptance, LP pool, AI identity, /redteam
-  app/api/     serverless routes: agent, sales, relay (gasless), link, redteam, telegram (webhook)
+  app/         pages: owner dashboard (/dashboard), public shop page, QR pay, loan acceptance, LP pool, AI identity, /redteam
+  app/api/     serverless routes: agent, sales, relay (gasless), auth + chat (wallet sign-in), link, redteam, telegram (webhook)
   server/      Gemini agent + policy layer + reply guard, relayer, keeper, Redis store, Telegram handlers
                10 policy tests (npm test)
   scripts/     seed the demo shop, run a full loan cycle, gasless end-to-end test

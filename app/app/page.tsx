@@ -16,7 +16,8 @@ export default function Home() {
         That record unlocks collateral-free micro-loans from a public pool, repaid automatically as a small share of each sale. No pinjol, no debt collectors.
       </p>
       <div className="row">
-        {DEMO && <a className="btn" href={`/m/${DEMO}`}>See a live shop</a>}
+        <a className="btn" href="/dashboard">Open my shop dashboard</a>
+        {DEMO && <a className="btn" style={ghost} href={`/m/${DEMO}`}>See a live shop</a>}
         <a className="btn" style={ghost} href="/redteam">Try to break the AI</a>
         <a className="btn" style={ghost} href="https://t.me/WarungAgenttBot">Open the Telegram bot</a>
       </div>
