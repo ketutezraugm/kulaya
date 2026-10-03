@@ -128,26 +128,34 @@ function setEnv(k: string, v: string) {
   writeFileSync(".env.local", s);
 }
 
-/** One payment per payer per epoch: the contract only counts Rp 200rb per payer per day, so amounts stay at/below that. */
+/** Optional 3rd arg: fund ANY registered shop instead of the demo shop (e.g. `npm run seed -- day 0xYourWallet`). */
+const argTarget = process.argv[3];
+if (argTarget && !/^0x[0-9a-fA-F]{40}$/.test(argTarget)) throw new Error("bad address");
+const target = (argTarget ?? merchantAddr) as Address;
+
+/** One payment per payer per epoch: the contract only counts a capped amount per payer per day, so amounts stay at/below it. */
 async function day() {
   const epoch: bigint = await c.read("currentEpoch");
-  const cap = (await getFacts(c, merchantAddr)).params.payerEpochCap;
+  const f0 = await getFacts(c, target);
+  if (!f0.registered) throw new Error(`${target} is not a registered shop yet (run /link in Telegram first)`);
+  const cap = f0.params.payerEpochCap;
+  const slot = argTarget ? `${epoch}:${target.toLowerCase()}` : epoch.toString(); // progress tracked per shop per day
   const done = fs.readJson<Record<string, string[]>>(".cache/seeded.json") ?? {};
-  const already = new Set(done[epoch.toString()] ?? []);
+  const already = new Set(done[slot] ?? []);
   const todo = wallets.payers.map((k, i) => ({ k, a: payerAddrs[i], i })).filter((p) => !already.has(p.a));
-  console.log(`epoch ${epoch}: ${already.size} already paid, ${todo.length} to go`);
+  console.log(`epoch ${epoch} -> ${target}: ${already.size} already paid, ${todo.length} to go`);
   await pool(todo, 5, async (p) => {
     const amount = (cap * BigInt(85 + Math.floor(Math.random() * 16))) / 100n; // 85-100% of the per-payer cap
     const memo = MEMOS[Math.floor(Math.random() * MEMOS.length)];
-    await send(p.k, { address: c.warung, abi: warungAbi, functionName: "pay", args: [merchantAddr, amount, memo] });
-    (done[epoch.toString()] ??= []).push(p.a);
+    await send(p.k, { address: c.warung, abi: warungAbi, functionName: "pay", args: [target, amount, memo] });
+    (done[slot] ??= []).push(p.a);
     fs.writeJson(".cache/seeded.json", done);
   });
   await status();
 }
 
 async function status() {
-  const f = await getFacts(c, merchantAddr);
+  const f = await getFacts(c, target);
   console.log({
     merchant: f.merchant, registered: f.registered, payers: f.payers, activeDays: f.activeDays,
     trailingRevenue: rupiah(f.trailingRevenue), creditLimit: rupiah(f.creditLimit), tier: f.tier,
@@ -159,4 +167,4 @@ const cmd = process.argv[2];
 if (cmd === "setup") await setup();
 else if (cmd === "day") await day();
 else if (cmd === "status") await status();
-else console.log("usage: npm run seed -- setup | day | status");
+else console.log("usage: npm run seed -- setup | day [shop address] | status [shop address]");
