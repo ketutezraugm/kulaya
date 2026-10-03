@@ -9,3 +9,11 @@ contracts/broadcast/
 .cache/
 .seed-wallets.json
 *.tsbuildinfo
+
+# tool-generated agent rules
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+.vercel/
+skills-lock.json

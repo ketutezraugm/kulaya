@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Hex } from "viem";
-import type { Facts } from "./chain.js";
-import { reasonHash, RP } from "./chain.js";
-import { rupiah } from "./util.js";
+import type { Facts } from "./chain";
+import { reasonHash, RP } from "./chain";
+import { rupiah } from "./util";
 
 /**
  * Off-chain safety layer between the LLM and the contract. The contract re-checks everything (this is defense in

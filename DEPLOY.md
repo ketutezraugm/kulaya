@@ -1,47 +1,50 @@
 # Deploying Warung Agent
 
-Two pieces: the **web app** (static-ish Next.js, free on Vercel) and the **bot** (a long-running Node process: Telegram polling + AI + relayer + API). The contracts are already deployed (see README).
+Everything (web app, AI agent, gasless relayer, Telegram bot) is **one Next.js project** on **Vercel**, plus a free **Upstash Redis** for small state. The contracts are already deployed on BSC testnet (see README).
 
-> Stop any bot running on your own machine before the hosted one starts. Telegram allows one polling process per bot token.
+```
+Telegram ──webhook──▶ /api/telegram ─┐
+Browser  ──────────▶ /api/{agent,sales,relay,link,redteam}
+                                      ├─▶ Gemini (AI)      ├─▶ BSC testnet RPCs
+                                      └─▶ Upstash Redis (wallet links, rate limits, locks, sale-history cache)
+```
 
-## 1. Bot (Render, free) → gives you `BOT_URL`
+## One-time setup
 
-1. [render.com](https://render.com) → **New → Web Service** → connect the GitHub repo.
-2. Settings: **Root Directory** `bot` · **Runtime** Docker (uses `bot/Dockerfile`) · Instance **Free** · Health Check Path `/health`.
-3. **Environment** (copy values from your local `bot/.env`; never commit them):
+1. **Vercel project:** `cd app && npx vercel link`, then `npx vercel deploy --prod`.
+2. **Redis:** `npx vercel integration add upstash/upstash-kv` (accept the terms in the browser once). It injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+3. **Environment variables** (Project → Settings → Environment Variables, Production). Mark the first five *Sensitive*:
 
 | Variable | Notes |
 |---|---|
-| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` | `gemini-3.5-flash` / `gemini-3.8-flash` |
-| `TELEGRAM_BOT_TOKEN` | from @BotFather |
-| `RPC_URL` | comma-separated list from `.env.example` |
-| `UNDERWRITER_PRIVATE_KEY` | the AI key (propose-only, tiny gas balance) |
-| `RELAYER_PRIVATE_KEY` | the gasless relayer (gas money only) |
-| `WARUNG_ADDRESS`, `IDRX_ADDRESS`, `REPUTATION_ADAPTER`, `AGENT_ID`, `ERC8004_REPUTATION_REGISTRY`, `DEPLOY_BLOCK`, `REDTEAM_MERCHANT` | from the README / `.env` |
-| `APP_URL` | your Vercel URL (step 2) |
-| `PORT` | `8787` |
+| `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `UNDERWRITER_PRIVATE_KEY`, `RELAYER_PRIVATE_KEY` | secrets. Webhook secret: any 16+ char random string (`openssl rand -hex 24`) |
+| `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` | `gemini-3.5-flash` / `gemini-3.8-flash` |
+| `RPC_URL` | comma-separated failover list (see `app/.env.example`) |
+| `WARUNG_ADDRESS`, `IDRX_ADDRESS`, `REPUTATION_ADAPTER`, `ERC8004_REPUTATION_REGISTRY`, `AGENT_ID`, `DEPLOY_BLOCK`, `CHAIN_ID` | from the README / deploy output |
+| `REDTEAM_MERCHANT`, `REDTEAM_RATE_LIMIT` | demo shop for `/redteam`; attempts per IP per hour |
+| `APP_URL` | the production URL (used in QR payment and loan links) |
+| `NEXT_PUBLIC_*` | public copies of the addresses (see `app/.env.example`) |
 
-4. Free instances sleep after ~15 min without HTTP traffic, which would pause Telegram polling. Keep it awake with a free monitor ([UptimeRobot](https://uptimerobot.com)): HTTP check on `BOT_URL/health` every 5 minutes.
-5. Free instances have an ephemeral disk: Telegram wallet links and the sales cache reset on restart (users just run `/link` again; the cache rebuilds). Attach a disk or move to SQLite/Supabase if that matters.
+4. **Telegram webhook** (once, and again if the URL or secret changes):
 
-## 2. Web app (Vercel) → gives you `APP_URL`
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  --data-urlencode "url=https://<your-app>.vercel.app/api/telegram" \
+  --data-urlencode "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
+  --data-urlencode 'allowed_updates=["message"]'
+```
 
-1. [vercel.com](https://vercel.com) → **Add New Project** → import the repo → **Root Directory** `app` (framework: Next.js, auto-detected).
-2. **Environment Variables** (all public, from `app/.env.example`):
+5. **Warm the sale-history cache** (one-time backfill; the API then only scans a few recent blocks per request): `cd app && npm run warm`. This needs the Redis variables locally (`npx vercel env pull`).
 
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_CHAIN_ID` | `97` |
-| `NEXT_PUBLIC_RPC_URL` | comma-separated RPC list |
-| `NEXT_PUBLIC_WARUNG_ADDRESS`, `NEXT_PUBLIC_IDRX_ADDRESS`, `NEXT_PUBLIC_REPUTATION_ADAPTER` | from the README |
-| `NEXT_PUBLIC_ERC8004_IDENTITY_REGISTRY`, `NEXT_PUBLIC_ERC8004_REPUTATION_REGISTRY`, `NEXT_PUBLIC_AGENT_ID` | from `.env.example` |
-| `NEXT_PUBLIC_DEMO_MERCHANT` | the demo shop address |
-| `NEXT_PUBLIC_BOT_API_URL` | `BOT_URL` from step 1 (https, no trailing slash) |
+## Operating notes
 
-3. Deploy. Then set `APP_URL` on the bot to this URL and redeploy the bot (it builds the QR and loan links from it).
+- **No servers to keep awake.** Telegram calls the webhook; the AI work runs after the HTTP response (`after()`), so Telegram never retries on slow replies (duplicates are also dropped by update id).
+- **Closed loans** are published to the AI's ERC-8004 reputation by a keeper that piggybacks on `/api/agent` requests (once a minute at most, cross-instance locked).
+- **Relayer gas:** the relayer wallet needs tBNB. It refuses to run below 0.002 tBNB and returns a clear error.
+- **Free-tier Gemini** rate-limits: `/api/redteam` is limited per IP, and the red-team page offers a "compromised model" mode that never calls the LLM.
+- **Log history:** the official BNB RPCs reject `eth_getLogs` and PublicNode prunes old logs, so `LOGS_RPC_URL` defaults to OnFinality's public node (10k-block ranges) with PublicNode as fallback.
+- Keep the demo shop's 30-day credit window fresh until Demo Day (Oct 31): `cd app && npm run seed -- day` once per UTC day.
 
-## 3. After both are up
+## Redeploying contracts
 
-- Replace `<APP_URL>`, `<VIDEO_URL>` in `README.md` and set the repo's website field.
-- Smoke test: open `APP_URL`, `/redteam` (run the "compromised model" attack), `/agent`, and message the bot `/start`.
-- Keep the demo shop's 30-day credit window fresh until Demo Day (Oct 31): run `cd bot && npm run seed -- day` once per UTC day (a scheduled GitHub Action works well: store the seed wallets file as a secret).
+`cd contracts && bash redeploy.sh` redeploys, seeds and runs a full loan cycle, writing `app/.env.local`. Then update the matching variables on Vercel, run `npm run warm`, redeploy the app, and refresh the ERC-8004 agent card (`setAgentURI`).

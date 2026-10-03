@@ -58,8 +58,8 @@ LLMs hallucinate and can be jailbroken, so **nothing the AI says is trusted**. S
 |---|---|---|---|
 | 1 | **The AI's key can only call `proposeLoan`** and holds no funds | The AI moving money | `UNDERWRITER_ROLE`, [Warung.sol](contracts/src/Warung.sol) |
 | 2 | **Hard caps in the contract:** loan ≤ 10% of trailing verified revenue and ≤ tier max; fee ≤ 5%; ≤ 20% of each sale; per-loan ≤ 5% of pool; daily budget; ≥ 5 distinct customers; per-customer revenue cap | Over-lending, even if the AI is fully compromised | `Warung.sol` reverts (`ExceedsCreditCap`, `FeeTooHigh`…) |
-| 3 | **The LLM never writes numbers.** Its explanation is a template with `{{placeholders}}`; code fills in real figures. Any stray digit rejects the proposal | Hallucinated figures reaching the owner | [policy.ts](bot/src/policy.ts) |
-| 4 | **Reply guard:** every figure in the AI's final message must already appear in a tool result, otherwise the model must rewrite | The AI inventing or miscalculating numbers in chat | [agent.ts](bot/src/agent.ts) |
+| 3 | **The LLM never writes numbers.** Its explanation is a template with `{{placeholders}}`; code fills in real figures. Any stray digit rejects the proposal | Hallucinated figures reaching the owner | [policy.ts](app/server/policy.ts) |
+| 4 | **Reply guard:** every figure in the AI's final message must already appear in a tool result, otherwise the model must rewrite | The AI inventing or miscalculating numbers in chat | [agent.ts](app/server/agent.ts) |
 | + | **Consent comes from the chain:** the accept page shows terms read from the contract. The merchant is fixed by code, so no tool lets the model retarget a loan | Misleading chat text, prompt-injected retargeting | [app/loan/[id]](app/app/loan/%5Bid%5D/page.tsx) |
 
 **Attack it yourself:** [`/redteam`](https://warung-agent.vercel.app/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
@@ -107,48 +107,46 @@ A complete real loan cycle has been run on-chain: the AI proposed Rp 800.000, th
 ```
 contracts/   Foundry. Warung.sol (credit + pool + relayed actions), ReputationAdapter.sol, MockIDRX.sol
              33 tests: unit, fuzz, stateful invariants, relay attack cases
-bot/         TypeScript. Gemini agent + policy layer + Telegram bot + HTTP API (/redteam, /relay, /agent)
-             10 policy tests; scripts for seeding, a full loan cycle and the gasless end-to-end test
-app/         Next.js. Shop dashboard, pay page (QR), loan page, LP pool, AI identity, /redteam
+app/         ONE Next.js project, deployed on Vercel
+  app/         pages: shop dashboard, QR pay, loan acceptance, LP pool, AI identity, /redteam
+  app/api/     serverless routes: agent, sales, relay (gasless), link, redteam, telegram (webhook)
+  server/      Gemini agent + policy layer + reply guard, relayer, keeper, Redis store, Telegram handlers
+               10 policy tests (npm test)
+  scripts/     seed the demo shop, run a full loan cycle, gasless end-to-end test
 ```
 
 ## Run it yourself
 
-Prerequisites: Node 22+, [Foundry](https://getfoundry.sh), a BSC testnet wallet with tBNB, a [Gemini API key](https://aistudio.google.com/apikey) (free tier), a Telegram bot token from @BotFather.
+Prerequisites: Node 22+, [Foundry](https://getfoundry.sh), a BSC testnet wallet with tBNB, a [Gemini API key](https://aistudio.google.com/apikey) (free tier), a Telegram bot token from @BotFather. Redis is optional locally (it falls back to memory).
 
 ```bash
-git clone --recurse-submodules <this repo> && cd warung-agent
+git clone --recurse-submodules https://github.com/ketutezraugm/warung-agent && cd warung-agent
 
 # 1. contracts
 cd contracts
 cp .env.example .env              # PRIVATE_KEY (throwaway testnet wallet), AGENT_ADDRESS
 forge test                        # 33 tests
-bash redeploy.sh                  # deploy → adapter → seed demo shop → one real loan cycle
+bash redeploy.sh                  # deploy → adapter → seed demo shop → one real loan cycle (writes app/.env.local)
 
-# 2. bot (Telegram + AI + relayer + API on :8787)
-cd ../bot && npm install
-cp .env.example .env              # fill keys (redeploy.sh already filled the addresses)
-npm test                          # policy tests
-npm start
-
-# 3. web app (:3000)
+# 2. app + API + bot
 cd ../app && npm install
-cp .env.example .env.local
-npm run dev
+cp .env.example .env.local        # add the server-side keys listed in DEPLOY.md
+npm test                          # policy tests
+npm run dev                       # http://localhost:3000 (API under /api)
 ```
 
-Useful scripts (`bot/`): `npm run seed -- day` (record a day of demo sales; run daily to keep the 30-day credit window fresh), `npm run e2e` (full loan cycle on testnet), `npm run gasless` (zero-BNB wallet pays and registers via the relayer, plus tamper/replay attacks).
+Hosting on Vercel (webhook, Redis, env vars): see [DEPLOY.md](DEPLOY.md). Useful scripts (`app/`): `npm run seed -- day` (record a day of demo sales; run daily to keep the 30-day credit window fresh), `npm run e2e` (full loan cycle on testnet), `npm run gasless` (zero-BNB wallet pays and registers via the relayer, plus tamper/replay attacks), `npm run warm` (backfill the sale-history cache).
 
 ## Honest limits
 
 - **Testnet only.** The stablecoin is a mock. There is no real money, and the demo shop's customers are seeded wallets. We had no access to real UMKM during the hackathon.
 - **Real lending needs a license.** The production path is partnering with an OJK-licensed P2P lender or *koperasi* as lender of record (OJK regulatory sandbox), with real IDRX.
 - **Demo wash-trading defense is parameter-based:** a per-customer daily cap, a minimum payment and ≥ 5 distinct customers per loan, plus the AI's fraud flag, which can only *lower* limits. A production system would add identity and device attestation.
-- Custom fixed parameters (no admin setter or timelock); the relayer and bot state are single-process (see `ponytail:` comments in code for upgrade paths).
+- Custom fixed parameters (no admin setter or timelock); (see `ponytail:` comments in code for upgrade paths). State (wallet links, rate limits, locks) lives in Upstash Redis.
 
 ## Tech
 
-Solidity 0.8.28 · Foundry · OpenZeppelin 5 · ERC-8004 · EIP-712 / EIP-2612 · viem · Google Gemini (free tier) · grammY (Telegram) · Next.js · BNB Smart Chain testnet
+Solidity 0.8.28 · Foundry · OpenZeppelin 5 · ERC-8004 · EIP-712 / EIP-2612 · viem · Google Gemini (free tier) · grammY (Telegram webhook) · Next.js on Vercel · Upstash Redis · BNB Smart Chain testnet
 
 ## License
 

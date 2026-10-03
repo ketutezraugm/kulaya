@@ -7,11 +7,11 @@
 import { createWalletClient, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
-import { loadConfig } from "../src/config.js";
-import { makeChain, getFacts, getLoan, agentReputation, gasPrice, transportFor, warungAbi, erc20Abi } from "../src/chain.js";
-import { runTool } from "../src/agent.js";
-import { reportClosedLoans } from "../src/keeper.js";
-import { fs, rupiah } from "../src/util.js";
+import { loadConfig } from "../server/config";
+import { makeChain, getFacts, getLoan, agentReputation, gasPrice, transportFor, warungAbi, erc20Abi } from "../server/chain";
+import { runTool } from "../server/agent";
+import { reportClosedLoans } from "../server/keeper";
+import { fs, rupiah } from "../server/util";
 
 const cfg = loadConfig(true);
 const c = makeChain(cfg);

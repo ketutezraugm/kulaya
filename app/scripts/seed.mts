@@ -9,9 +9,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { createWalletClient, parseEther, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
-import { loadConfig } from "../src/config.js";
-import { makeChain, getFacts, RP, erc20Abi, warungAbi, transportFor } from "../src/chain.js";
-import { fs, rupiah, sleep } from "../src/util.js";
+import { loadConfig } from "../server/config";
+import { makeChain, getFacts, RP, erc20Abi, warungAbi, transportFor } from "../server/chain";
+import { fs, rupiah, sleep } from "../server/util";
 
 const PAYERS = 50;
 const WALLETS = ".seed-wallets.json";
@@ -119,13 +119,13 @@ async function setup() {
   }
 
   setEnv("REDTEAM_MERCHANT", merchantAddr);
-  console.log("done. REDTEAM_MERCHANT written to bot/.env");
+  console.log("done. REDTEAM_MERCHANT written to app/.env.local");
 }
 
 function setEnv(k: string, v: string) {
-  let s = readFileSync(".env", "utf8");
+  let s = readFileSync(".env.local", "utf8");
   s = new RegExp(`^${k}=`, "m").test(s) ? s.replace(new RegExp(`^${k}=.*$`, "m"), `${k}=${v}`) : s.trimEnd() + `\n${k}=${v}\n`;
-  writeFileSync(".env", s);
+  writeFileSync(".env.local", s);
 }
 
 /** One payment per payer per epoch: the contract only counts Rp 200rb per payer per day, so amounts stay at/below that. */

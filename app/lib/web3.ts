@@ -5,7 +5,8 @@ import { bscTestnet } from "viem/chains";
 
 export const WARUNG = process.env.NEXT_PUBLIC_WARUNG_ADDRESS as Address;
 export const IDRX = process.env.NEXT_PUBLIC_IDRX_ADDRESS as Address;
-export const BOT_API = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8787";
+/** API routes live in this same Next.js app (app/app/api/*). */
+export const BOT_API = "/api";
 export const AGENT_ID = BigInt(process.env.NEXT_PUBLIC_AGENT_ID || 0);
 export const IDENTITY = process.env.NEXT_PUBLIC_ERC8004_IDENTITY_REGISTRY as Address;
 export const REPUTATION = process.env.NEXT_PUBLIC_ERC8004_REPUTATION_REGISTRY as Address;

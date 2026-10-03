@@ -2,18 +2,18 @@
  * Proves the gasless path end to end against the running bot's /relay endpoint:
  * a brand-new wallet with ZERO BNB gets test IDRX, pays a shop, and registers its own shop, only by signing.
  * Also tries the attacks a malicious relayer/user would: tampered payment, replayed signature.
- *   (bot must be running)  npm run gasless
+ *   (`npm run dev` must be running)  npm run gasless
  */
 import { createWalletClient, keccak256, toBytes, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
-import { loadConfig } from "../src/config.js";
-import { makeChain, transportFor, erc20Abi, warungAbi } from "../src/chain.js";
-import { rupiah } from "../src/util.js";
+import { loadConfig } from "../server/config";
+import { makeChain, transportFor, erc20Abi, warungAbi } from "../server/chain";
+import { rupiah } from "../server/util";
 
 const cfg = loadConfig(true);
 const c = makeChain(cfg);
-const API = `http://localhost:${cfg.PORT}`;
+const API = process.env.APP_BASE ?? "http://localhost:3000/api"; // the Next.js API routes (run `npm run dev` first)
 const WARUNG = cfg.WARUNG_ADDRESS as Address;
 const IDRX = cfg.IDRX_ADDRESS as Address;
 const merchant = cfg.REDTEAM_MERCHANT as Address;

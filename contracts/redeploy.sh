@@ -12,8 +12,10 @@ python redeploy_env.py core
 forge script script/DeployReputation.s.sol --rpc-url bsc_testnet --broadcast $GAS | grep -E "ONCHAIN|Error"
 python redeploy_env.py adapter
 
-cd ../bot
+cd ../app
 rm -f .cache/seeded.json .cache/sales.json
 npm run seed -- setup 2>&1 | grep -vE "^npm notice|^> |^$"
 npm run seed -- day 2>&1 | grep -vE "^npm notice|^> |^$"
 npm run e2e 2>&1 | grep -vE "^npm notice|^> |^$"
+echo
+echo 'Done. If the web app is hosted, update the same variables on Vercel (WARUNG_ADDRESS, IDRX_ADDRESS, REPUTATION_ADAPTER, DEPLOY_BLOCK and the NEXT_PUBLIC_* copies), run `npm run warm`, redeploy, and refresh the agent card.'

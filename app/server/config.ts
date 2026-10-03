@@ -9,6 +9,8 @@ const schema = z.object({
   GEMINI_FALLBACK_MODEL: z.string().default("gemini-3.8-flash"),
   TELEGRAM_BOT_TOKEN: z.string().min(10),
   RPC_URL: z.string().min(8), // one URL, or several comma-separated for failover
+  // eth_getLogs needs a node with historical logs: the official BNB nodes reject it, PublicNode prunes old logs, OnFinality keeps them (10k-block ranges)
+  LOGS_RPC_URL: z.string().default("https://bnb-testnet.api.onfinality.io/public,https://bsc-testnet-rpc.publicnode.com"),
   CHAIN_ID: z.coerce.number().default(97),
   UNDERWRITER_PRIVATE_KEY: key,
   RELAYER_PRIVATE_KEY: key.optional(), // pays gas for users' signed actions; separate from the AI key and holds only gas money
@@ -20,6 +22,7 @@ const schema = z.object({
   DEPLOY_BLOCK: z.coerce.bigint().default(0n),
   APP_URL: z.string().url().default("http://localhost:3000"),
   REDTEAM_RATE_LIMIT: z.coerce.number().default(20),
+  TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
   REDTEAM_MERCHANT: addr.optional(),
   PORT: z.coerce.number().default(8787),
 });

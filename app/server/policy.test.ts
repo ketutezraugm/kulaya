@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateProposal } from "./policy.js";
-import type { Facts } from "./chain.js";
+import { validateProposal } from "./policy";
+import type { Facts } from "./chain";
 
 const RP = 100n;
 const facts = (over: Partial<Facts> = {}): Facts => ({

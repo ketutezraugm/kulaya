@@ -2,9 +2,10 @@ import { createWalletClient, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
 import { z } from "zod";
-import { transportFor, gasPrice, type Chain } from "./chain.js";
-import { warungAbi, erc20Abi } from "./abi.js";
-import { revertReason } from "./agent.js";
+import { transportFor, gasPrice, type Chain } from "./chain";
+import { warungAbi, erc20Abi } from "./abi";
+import { revertReason } from "./agent";
+import { limited, withLock } from "./kv";
 
 /**
  * Gasless relayer: users sign EIP-712 messages, this wallet submits them and pays the gas.
@@ -32,18 +33,6 @@ const DAILY_TX_CAP = 500;
 const MIN_BALANCE = 2_000_000_000_000_000n; // 0.002 tBNB floor so the relayer never strands itself mid-flow
 const FAUCET_UNITS = 100_000_000n; // Rp 1.000.000 of mock IDRX
 
-// ponytail: in-memory counters, single process. Use Redis if the bot is ever scaled out.
-const hits = new Map<string, number[]>();
-function limited(key: string, max: number, windowMs: number) {
-  const now = Date.now();
-  const w = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (w.length >= max) { hits.set(key, w); return true; }
-  w.push(now); hits.set(key, w);
-  return false;
-}
-let queue: Promise<unknown> = Promise.resolve(); // one tx at a time so the relayer's nonce never races
-const serial = <T>(fn: () => Promise<T>): Promise<T> => { const r = queue.then(fn, fn); queue = r.catch(() => {}); return r; };
-
 export type RelayResult = { status: number; body: unknown };
 
 export function makeRelayer(chain: Chain) {
@@ -62,8 +51,10 @@ export function makeRelayer(chain: Chain) {
       gas = await publicClient.estimateContractGas({ ...req, account } as never);
     } catch (e) { return { status: 400, body: { error: "rejected by contract", revert: revertReason(e) } }; }
     if (gas > MAX_GAS) return { status: 400, body: { error: "gas too high" } };
-    return serial(async () => {
-      const hash = await wallet.writeContract({ ...req, gas: (gas * 13n) / 10n, type: "legacy", gasPrice: await gasPrice(chain) } as never);
+    // one send at a time from the relayer key across all serverless instances (nonce safety)
+    return withLock("relayer", async () => {
+      const nonce = await publicClient.getTransactionCount({ address: account.address, blockTag: "pending" });
+      const hash = await wallet.writeContract({ ...req, nonce, gas: (gas * 13n) / 10n, type: "legacy", gasPrice: await gasPrice(chain) } as never);
       const r = await publicClient.waitForTransactionReceipt({ hash });
       return r.status === "success" ? { status: 200, body: { hash } } : { status: 500, body: { error: "transaction reverted", hash } };
     });
@@ -76,7 +67,7 @@ export function makeRelayer(chain: Chain) {
       const parsed = Body.safeParse(raw);
       if (!parsed.success) return { status: 400, body: { error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ").slice(0, 200) } };
       const b = parsed.data;
-      if (limited(`ip:${ip}`, 60, 3_600_000) || limited("global:day", DAILY_TX_CAP, 86_400_000)) return { status: 429, body: { error: "relayer rate limit, try again later" } };
+      if ((await limited(`relay:ip:${ip}`, 60, 3600)) || (await limited("relay:global:day", DAILY_TX_CAP, 86_400))) return { status: 429, body: { error: "relayer rate limit, try again later" } };
       if ((await publicClient.getBalance({ address: account.address })) < MIN_BALANCE) return { status: 503, body: { error: "relayer is out of gas money" } };
 
       switch (b.action) {
@@ -88,7 +79,7 @@ export function makeRelayer(chain: Chain) {
           return submit({ address: warung, abi: warungAbi, functionName: "payFor", args: [b.payer, b.merchant, BigInt(b.amount), b.memo, BigInt(b.deadline), b.sig, BigInt(b.permit.deadline), b.permit.v, b.permit.r, b.permit.s] });
         case "faucet":
           // testnet convenience: free mock IDRX so a brand-new wallet can try the app with zero BNB
-          if (limited(`faucet:${b.address.toLowerCase()}`, 3, 86_400_000) || limited(`faucetip:${ip}`, 10, 86_400_000)) return { status: 429, body: { error: "faucet limit reached for today" } };
+          if ((await limited(`faucet:${b.address.toLowerCase()}`, 3, 86_400)) || (await limited(`faucetip:${ip}`, 10, 86_400))) return { status: 429, body: { error: "faucet limit reached for today" } };
           return submit({ address: idrx, abi: erc20Abi, functionName: "mint", args: [b.address, FAUCET_UNITS] });
       }
     },

@@ -1,8 +1,8 @@
 /** Live sandbox run of the real agent against the real contract (never broadcasts).
  *  npm run check -- "Saya mau pinjam modal"            */
-import { loadConfig } from "../src/config.js";
-import { makeChain } from "../src/chain.js";
-import { makeModel, runAgent } from "../src/agent.js";
+import { loadConfig } from "../server/config";
+import { makeChain } from "../server/chain";
+import { makeModel, runAgent } from "../server/agent";
 
 const cfg = loadConfig();
 const chain = makeChain(cfg);

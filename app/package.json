@@ -4,18 +4,32 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 3000",
+    "seed": "tsx --env-file=.env.local scripts/seed.mts",
+    "e2e": "tsx --env-file=.env.local scripts/e2e.mts",
+    "gasless": "tsx --env-file=.env.local scripts/gasless.mts",
+    "warm": "tsx --env-file=.env.local scripts/warm-cache.mts",
+    "check": "tsx --env-file=.env.local scripts/check.mts",
+    "test": "tsx --test server/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
+    "@upstash/redis": "^1.39.0",
+    "grammy": "^1.46.0",
     "next": "^16.3.8",
+    "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "viem": "^2.57.2"
+    "viem": "^2.57.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
 }

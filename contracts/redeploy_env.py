@@ -37,9 +37,9 @@ if mode == "core":
     assert len(cast("code", W, "--rpc-url", RPC)) > 100 and len(cast("code", I, "--rpc-url", RPC)) > 100, "no code on chain"
     assert cast("call", W, "asset()(address)", "--rpc-url", RPC).lower() == I.lower(), "asset mismatch"
     setenv(".env", "WARUNG_ADDRESS", W)
-    setenv("../bot/.env", "WARUNG_ADDRESS", W)
-    setenv("../bot/.env", "IDRX_ADDRESS", I)
-    setenv("../bot/.env", "DEPLOY_BLOCK", block)
+    setenv("../app/.env.local", "WARUNG_ADDRESS", W)
+    setenv("../app/.env.local", "IDRX_ADDRESS", I)
+    setenv("../app/.env.local", "DEPLOY_BLOCK", block)
     setenv("../app/.env.local", "NEXT_PUBLIC_WARUNG_ADDRESS", W)
     setenv("../app/.env.local", "NEXT_PUBLIC_IDRX_ADDRESS", I)
     print("CORE VERIFIED", W, I, block)
@@ -51,7 +51,7 @@ elif mode == "adapter":
     assert first(A, "warung()(address)").lower() == W.lower(), "adapter bound to wrong warung"
     assert first(W, "reputation()(address)").lower() == A.lower(), "warung not wired to adapter"
     assert first(A, "agentId()(uint256)") == "2535"
-    setenv("../bot/.env", "REPUTATION_ADAPTER", A)
+    setenv("../app/.env.local", "REPUTATION_ADAPTER", A)
     setenv("../app/.env.local", "NEXT_PUBLIC_REPUTATION_ADAPTER", A)
     print("ADAPTER VERIFIED", A, "<->", W)
 else:

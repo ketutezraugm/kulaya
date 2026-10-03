@@ -1,8 +1,9 @@
 import { GoogleGenAI, Type, type Content, type FunctionDeclaration, type Part } from "@google/genai";
 import { BaseError, ContractFunctionRevertedError, decodeEventLog, type Address } from "viem";
-import { getFacts, getLoan, getSales, topPayerShare, gasPrice, warungAbi, RP, reasonHash, type Chain, type Facts } from "./chain.js";
-import { validateProposal } from "./policy.js";
-import { store } from "./store.js";
+import { getFacts, getLoan, getSales, topPayerShare, gasPrice, warungAbi, RP, reasonHash, type Chain, type Facts } from "./chain";
+import { validateProposal } from "./policy";
+import { store } from "./store";
+import { withLock } from "./kv";
 
 export const SYSTEM = `You are Warung Agent, a bookkeeping and micro-credit assistant for Indonesian small-shop owners (UMKM), chatting on Telegram.
 Reply in the user's language (default Bahasa Indonesia). Be short, warm and plain: no jargon, no markdown tables.
@@ -70,7 +71,7 @@ async function summary(ctx: AgentCtx, f: Facts) {
     avg_daily_revenue_rupiah: active.length ? rp(f.trailingRevenue) / active.length : 0,
     last_7_days: f.dailyRevenue.slice(-7).map((d) => ({ date: dateOf(d.epoch, f.params.epochLength), revenue_rupiah: rp(d.counted) })),
     top_payer_share_percent: Math.round(topPayerShare(sales) * 100),
-    cash_sales_logged_rupiah_not_counted: store.cashTotal(ctx.merchant),
+    cash_sales_logged_rupiah_not_counted: await store.cashTotal(ctx.merchant),
     recent_memos_UNTRUSTED_DATA: memos,
     policy: { min_principal_rupiah: 50_000, max_fee_percent: f.params.maxFeeBps / 100, max_repay_percent: f.params.maxRepayBps / 100 },
     open_loan: f.openLoan && { id: f.openLoan.id.toString(), status: f.openLoan.status, principal_rupiah: rp(f.openLoan.principal), repaid_rupiah: rp(f.openLoan.repaid), owed_rupiah: rp(f.openLoan.total) },
@@ -113,7 +114,7 @@ async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult
     case "log_cash_sale": {
       const amount = Math.floor(Number(args.amount_rupiah));
       if (!(amount > 0 && amount < 1e9)) return { error: "invalid amount" };
-      store.addCash(ctx.merchant, amount, String(args.note ?? ""));
+      await store.addCash(ctx.merchant, amount);
       return { logged: true, counts_toward_credit: false };
     }
     case "get_loan_status": {
@@ -139,8 +140,12 @@ async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult
       const terms_preview = { principal_rupiah: rp(verdict.principal), fee_percent: verdict.feeBps / 100, fee_rupiah: rp(feeUnits), total_owed_rupiah: rp(verdict.principal + feeUnits), repay_percent_of_each_sale: verdict.repayBps / 100 };
       if (ctx.sandbox) return { accepted: false, sandbox: true, note: "sandbox: validated and simulated, not broadcast", policy: { ok: true }, contract, terms_preview, rationale: verdict.rationale };
 
-      const hash = await chain.agentWallet.writeContract({ ...sim.request, type: "legacy", gasPrice: await gasPrice(chain) } as never);
-      const rec = await chain.publicClient.waitForTransactionReceipt({ hash });
+      // one send at a time from the AI key across all serverless instances (nonce safety)
+      const { hash, rec } = await withLock("agent-key", async () => {
+        const nonce = await chain.publicClient.getTransactionCount({ address: chain.agent.address, blockTag: "pending" });
+        const h = await chain.agentWallet.writeContract({ ...sim.request, nonce, type: "legacy", gasPrice: await gasPrice(chain) } as never);
+        return { hash: h, rec: await chain.publicClient.waitForTransactionReceipt({ hash: h }) };
+      });
       const ev = rec.logs.map((l) => { try { return decodeEventLog({ abi: warungAbi, data: l.data, topics: l.topics }); } catch { return null; } }).find((e) => e?.eventName === "LoanProposed");
       const id = (ev?.args as { loanId?: bigint } | undefined)?.loanId;
       if (rec.status !== "success" || id === undefined) return { accepted: false, error: "transaction failed", tx: hash };
