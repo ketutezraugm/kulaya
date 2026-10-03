@@ -1,8 +1,9 @@
 "use client";
-import { keccak256, toBytes, type Address, type Hex } from "viem";
-import { BOT_API, IDRX, WARUNG, erc20Abi, publicClient, warungRead, type useWallet } from "./web3";
+import { keccak256, toBytes, type Account, type Address, type Chain, type Hex, type Transport, type WalletClient } from "viem";
+import { BOT_API, IDRX, WARUNG, erc20Abi, publicClient, warungRead } from "./web3";
 
-type Wallet = NonNullable<ReturnType<typeof useWallet>["wallet"]>;
+/** Any signer: the injected browser wallet or the local demo wallet. */
+type Wallet = WalletClient<Transport, Chain, Account>;
 
 /** Thrown when the relayer can't help (down, rate-limited, out of gas money). The caller falls back to a normal transaction. */
 export class RelayUnavailable extends Error {}

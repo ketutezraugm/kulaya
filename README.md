@@ -137,9 +137,21 @@ npm run dev                       # http://localhost:3000 (API under /api)
 
 Hosting on Vercel (webhook, Redis, env vars): see [DEPLOY.md](DEPLOY.md). Useful scripts (`app/`): `npm run seed -- day` (record a day of demo sales; run daily to keep the 30-day credit window fresh), `npm run e2e` (full loan cycle on testnet), `npm run gasless` (zero-BNB wallet pays and registers via the relayer, plus tamper/replay attacks), `npm run warm` (backfill the sale-history cache).
 
+## Roadmap: paying with QRIS (OVO, GoPay, Dana, bank apps)
+
+Today's payment QR opens a payment page and settles in a stablecoin, so **OVO/GoPay/bank apps can't scan it** (they only read QRIS, which settles in rupiah). We say so on the pay page too. Try it without any wallet: the pay page has a **demo wallet** button that funds a throwaway testnet wallet and pays gaslessly.
+
+The production path keeps everything on-chain as is and changes only how money enters:
+
+1. The shop shows a **QRIS** code issued by a licensed payment provider.
+2. A customer pays with their usual e-wallet, in rupiah.
+3. The provider converts and settles **IDRX** (rupiah stablecoin on BNB Chain, which already has rupiah on/off-ramps) straight into the Warung contract via `pay`, which records the sale and takes the repayment share.
+
+The contract, the verified revenue record, the AI underwriter and its limits are unchanged. This needs a licensed QRIS partner, so it is deliberately out of scope for the hackathon build.
+
 ## Honest limits
 
-- **Testnet only.** The stablecoin is a mock. There is no real money, and the demo shop's customers are seeded wallets. We had no access to real UMKM during the hackathon.
+- **Testnet only.** The stablecoin is a mock. There is no real money, the demo shop's customers are seeded wallets, and the payment QR is a link, not QRIS (see the roadmap above). We had no access to real UMKM during the hackathon.
 - **Real lending needs a license.** The production path is partnering with an OJK-licensed P2P lender or *koperasi* as lender of record (OJK regulatory sandbox), with real IDRX.
 - **Demo wash-trading defense is parameter-based:** a per-customer daily cap, a minimum payment and ≥ 5 distinct customers per loan, plus the AI's fraud flag, which can only *lower* limits. A production system would add identity and device attestation.
 - Custom fixed parameters (no admin setter or timelock); (see `ponytail:` comments in code for upgrade paths). State (wallet links, rate limits, locks) lives in Upstash Redis.

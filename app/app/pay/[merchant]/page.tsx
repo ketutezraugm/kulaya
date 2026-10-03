@@ -3,6 +3,7 @@ import { Suspense, use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Address } from "viem";
 import { gaslessPay, gaslessFaucet, RelayUnavailable } from "@/lib/gasless";
+import { demoWallet } from "@/lib/demo";
 import { IDRX, WARUNG, erc20Abi, warungAbi, warungRead, publicClient, useWallet, write, errText, rupiah, short, txLink } from "@/lib/web3";
 
 function Pay({ merchant }: { merchant: Address }) {
@@ -15,9 +16,11 @@ function Pay({ merchant }: { merchant: Address }) {
   const [busy, setBusy] = useState("");
   const [tx, setTx] = useState("");
   const [err, setErr] = useState("");
+  const [noWallet, setNoWallet] = useState(false);
   const units = BigInt(Math.floor(amountRp)) * 100n;
 
   useEffect(() => { warungRead("merchants", [merchant]).then(setM).catch(() => {}); }, [merchant]);
+  useEffect(() => { setNoWallet(!window.ethereum); }, []);
   useEffect(() => { if (account) publicClient.readContract({ address: IDRX, abi: erc20Abi, functionName: "balanceOf", args: [account] }).then(setBal); }, [account, tx, busy]);
 
   async function pay() {
@@ -45,6 +48,21 @@ function Pay({ merchant }: { merchant: Address }) {
     } catch (e) { setErr(errText(e)); } finally { setBusy(""); }
   }
 
+  /** No wallet needed: a throwaway browser-local testnet wallet gets free test IDRX and pays through the same gasless flow. */
+  async function payDemo() {
+    setErr(""); setTx("");
+    try {
+      const { account: a, wallet: w } = demoWallet();
+      if (a.address.toLowerCase() === merchant.toLowerCase()) throw new Error("demo wallet can't pay itself");
+      const have = await publicClient.readContract({ address: IDRX, abi: erc20Abi, functionName: "balanceOf", args: [a.address] });
+      if (have < units) { setBusy("Getting free test IDRX for the demo wallet…"); await gaslessFaucet(a.address); }
+      setBusy("Signing and sending the payment (no BNB, no wallet)…");
+      setTx(await gaslessPay(w, a.address, merchant, units, note.slice(0, 140)));
+    } catch (e) {
+      setErr(e instanceof RelayUnavailable ? "The free payment service is busy or out of quota right now. Try again in a minute." : errText(e));
+    } finally { setBusy(""); }
+  }
+
   async function faucet() {
     if (!wallet || !account) return;
     setErr(""); setBusy("Minting test IDRX…");
@@ -55,20 +73,46 @@ function Pay({ merchant }: { merchant: Address }) {
 
   if (m && !m[0]) return <p className="bad">This shop isn't registered.</p>;
   const short_ = bal !== null && bal < units;
+  const href = typeof window === "undefined" ? "" : window.location.href;
   return (
     <>
       <h1>Pay {amountRp ? rupiah(units) : "…"}</h1>
       <p className="sub">to shop <a className="mono" href={`/m/${merchant}`}>{short(merchant)}</a>{note && <> · “{note}”</>}</p>
+
+      <div className="card">
+        <b>Heads up: this is a stablecoin payment, not QRIS.</b>
+        <p className="sub" style={{ margin: "6px 0 0" }}>
+          OVO, GoPay and bank apps only read QRIS, so they can't pay this code. Pay with a crypto wallet (MetaMask, Trust, Binance Web3 Wallet) or try the demo wallet below, which needs no setup.
+          {" "}On BNB Chain testnet with free test money. A QRIS bridge (IDRX) is the production path.
+        </p>
+      </div>
+
       <div className="card">
         {!amountRp && <p className="bad">Missing amount in the link.</p>}
-        {!account ? <button onClick={connect}>Connect wallet</button> : (
+        <button onClick={payDemo} disabled={!!busy || !amountRp}>Pay with demo wallet (no wallet needed)</button>
+        <p className="sub" style={{ margin: "8px 0 0" }}>Creates a throwaway test wallet in this browser, funds it with free test IDRX and pays gaslessly. Testnet only.</p>
+
+        <hr style={{ border: 0, borderTop: "1px solid var(--line)", margin: "16px 0" }} />
+
+        {!account ? (
+          <>
+            <button className="ghost" onClick={connect}>Connect my wallet</button>
+            {noWallet && href && (
+              <p className="sub" style={{ margin: "10px 0 0" }}>
+                On a phone without a wallet browser? Open this page inside your wallet app:{" "}
+                <a href={`https://metamask.app.link/dapp/${href.replace(/^https?:\/\//, "")}`}>MetaMask</a> ·{" "}
+                <a href={`https://link.trustwallet.com/open_url?coin_id=20000714&url=${encodeURIComponent(href)}`}>Trust Wallet</a>
+              </p>
+            )}
+          </>
+        ) : (
           <>
             <p className="sub">Your balance: {bal === null ? "…" : rupiah(bal)} test IDRX {short_ && <button className="ghost" onClick={faucet} disabled={!!busy}>Get test IDRX</button>}</p>
-            <button onClick={pay} disabled={!!busy || !amountRp || short_}>Pay {amountRp ? rupiah(units) : ""}</button>
+            <button onClick={pay} disabled={!!busy || !amountRp || short_}>Pay {amountRp ? rupiah(units) : ""} from my wallet</button>
           </>
         )}
         {busy && <p className="sub">{busy}</p>}
-        {tx && <p className="ok">✅ Paid. <a href={txLink(tx)}>View transaction</a></p>}
+        {tx && <p className="ok">✅ Paid. <a href={txLink(tx)}>View transaction</a> · <a href={`/m/${merchant}`}>See it on the shop dashboard</a></p>}
         {(err || error) && <p className="bad">{err || error}</p>}
       </div>
       <p className="sub">If this shop has a loan, a small share of your payment automatically repays it. You always pay the same amount.</p>

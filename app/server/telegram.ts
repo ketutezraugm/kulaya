@@ -48,7 +48,7 @@ function build(): Bot {
       await ctx.reply(r.text, r.loan ? { reply_markup: new InlineKeyboard().url("Lihat & setujui pinjaman", r.loan.acceptUrl) } : undefined);
       for (const p of r.paymentLinks) {
         const png = await QRCode.toBuffer(p.url, { width: 512, margin: 2 });
-        await ctx.replyWithPhoto(new InputFile(png), { caption: `Bayar ${rupiah(BigInt(p.amountRupiah) * 100n)} ke toko Anda\n${p.url}` });
+        await ctx.replyWithPhoto(new InputFile(png), { caption: `Bayar ${rupiah(BigInt(p.amountRupiah) * 100n)} ke toko Anda.\nScan dengan kamera HP, lalu bayar dengan dompet kripto atau pilih "demo wallet". Ini bukan QRIS, jadi OVO/GoPay belum bisa.\n${p.url}` });
       }
     } catch (e) {
       console.error("agent error:", (e as Error).message.split("\n")[0]);
