@@ -30,8 +30,12 @@ export const store = {
     return (await kv.get<Content[]>(`hist:${tgId}`)) ?? [];
   },
   async saveHistory(tgId: string, h: Content[]): Promise<void> {
-    // never persist raw voice audio: replace it with a marker so the stored history stays small
-    const slim = h.map((c) => ({ ...c, parts: c.parts?.map((p) => (p.inlineData ? { text: "[voice note]" } : p)) }));
+    // Persist the conversation text only. Tool calls/results are deliberately dropped: they are snapshots of live chain
+    // data and go stale in minutes, and a model that sees an old "credit limit 0" will repeat it instead of re-checking.
+    // Raw voice audio is replaced with a marker so the stored history stays small.
+    const slim = h
+      .map((c) => ({ ...c, parts: c.parts?.filter((p) => !p.functionCall && !p.functionResponse).map((p) => (p.inlineData ? { text: "[voice note]" } : p)) }))
+      .filter((c) => c.parts && c.parts.length > 0);
     await kv.set(`hist:${tgId}`, slim, 24 * 3600);
   },
 };
