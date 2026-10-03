@@ -4,9 +4,13 @@ const addr = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "expected 0x address");
 const key = z.string().regex(/^0x[0-9a-fA-F]{64}$/, "expected 0x private key");
 
 const schema = z.object({
-  GEMINI_API_KEY: z.string().min(10),
-  GEMINI_MODEL: z.string().default("gemini-3.5-flash"),
-  GEMINI_FALLBACK_MODEL: z.string().default("gemini-3.8-flash"),
+  // LLM providers: set any subset (at least one). Tried in LLM_CHAIN order, default = Groq > Cerebras > Mistral > OpenRouter > Gemini.
+  GROQ_API_KEY: z.string().min(10).optional(),
+  CEREBRAS_API_KEY: z.string().min(10).optional(),
+  MISTRAL_API_KEY: z.string().min(10).optional(),
+  OPENROUTER_API_KEY: z.string().min(10).optional(),
+  GEMINI_API_KEY: z.string().min(10).optional(),
+  LLM_CHAIN: z.string().optional(), // e.g. "groq:openai/gpt-oss-120b,gemini:gemini-3.5-flash"
   TELEGRAM_BOT_TOKEN: z.string().min(10),
   RPC_URL: z.string().min(8), // one URL, or several comma-separated for failover
   // eth_getLogs needs a node with historical logs: the official BNB nodes reject it, PublicNode prunes old logs, OnFinality keeps them (10k-block ranges)
@@ -31,7 +35,7 @@ export type Config = z.infer<typeof schema>;
 
 /** Lazy so scripts that only need the chain don't need Gemini/Telegram keys. */
 export function loadConfig(partial = false): Config {
-  const s = partial ? schema.partial({ GEMINI_API_KEY: true, TELEGRAM_BOT_TOKEN: true }) : schema;
+  const s = partial ? schema.partial({ TELEGRAM_BOT_TOKEN: true }) : schema;
   const r = s.safeParse(process.env);
   if (!r.success) {
     const msg = r.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n  ");

@@ -1,6 +1,6 @@
 import { loadConfig } from "./config";
 import { makeChain } from "./chain";
-import { makeModel } from "./agent";
+import { makeLLM } from "./llm";
 import { makeRelayer } from "./relay";
 import { limited } from "./kv";
 
@@ -10,7 +10,7 @@ let rt: ReturnType<typeof build> | null = null;
 function build() {
   const cfg = loadConfig();
   const chain = makeChain(cfg);
-  return { cfg, chain, model: makeModel(cfg.GEMINI_API_KEY, cfg.GEMINI_MODEL, cfg.GEMINI_FALLBACK_MODEL), relayer: makeRelayer(chain) };
+  return { cfg, chain, llm: makeLLM(cfg, cfg.LLM_CHAIN), relayer: makeRelayer(chain) };
 }
 export const getRuntime = () => (rt ??= build());
 

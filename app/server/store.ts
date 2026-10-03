@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { Content } from "@google/genai";
+import type { Msg } from "./llm";
 import { kv } from "./kv";
 
 /** Chat state on top of the KV layer: Telegram<->wallet links, one-time link codes, bookkeeping, conversation memory. */
@@ -26,16 +26,11 @@ export const store = {
   async cashTotal(address: string): Promise<number> {
     return Number((await kv.get<number>(`cash:${address.toLowerCase()}`)) ?? 0);
   },
-  async history(tgId: string): Promise<Content[]> {
-    return (await kv.get<Content[]>(`hist:${tgId}`)) ?? [];
+  async history(tgId: string): Promise<Msg[]> {
+    return (await kv.get<Msg[]>(`hist2:${tgId}`)) ?? [];
   },
-  async saveHistory(tgId: string, h: Content[]): Promise<void> {
-    // Persist the conversation text only. Tool calls/results are deliberately dropped: they are snapshots of live chain
-    // data and go stale in minutes, and a model that sees an old "credit limit 0" will repeat it instead of re-checking.
-    // Raw voice audio is replaced with a marker so the stored history stays small.
-    const slim = h
-      .map((c) => ({ ...c, parts: c.parts?.filter((p) => !p.functionCall && !p.functionResponse).map((p) => (p.inlineData ? { text: "[voice note]" } : p)) }))
-      .filter((c) => c.parts && c.parts.length > 0);
-    await kv.set(`hist:${tgId}`, slim, 24 * 3600);
+  /** runAgent already returns text-only turns (no tool results, no audio), so this is small and never goes stale. */
+  async saveHistory(tgId: string, h: Msg[]): Promise<void> {
+    await kv.set(`hist2:${tgId}`, h, 24 * 3600);
   },
 };

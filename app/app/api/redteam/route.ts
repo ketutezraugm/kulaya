@@ -16,7 +16,7 @@ const Body = z.object({
 
 export async function POST(req: Request) {
   try {
-    const { chain, cfg, model } = getRuntime();
+    const { chain, cfg, llm } = getRuntime();
     const b = Body.parse(await req.json());
     const merchant = cfg.REDTEAM_MERCHANT as Address | undefined;
     if (!merchant) return json({ error: "redteam merchant not configured" }, 503);
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       return json({ mode: "compromised-model", trace: [{ tool: "propose_loan", args: b.rawToolCall, result }], reply: null });
     }
     if (!b.attack) return json({ error: "attack text required" }, 400);
-    const r = await runAgent(model, ctx, [], [{ text: b.attack }]);
+    const r = await runAgent(llm, ctx, [], { text: b.attack });
     return json({ mode: "model", trace: r.trace, reply: r.text });
   } catch (e) {
     if (e instanceof z.ZodError) return json({ error: e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ").slice(0, 200) }, 400);

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, type Content, type FunctionDeclaration, type Part } from "@google/genai";
+import { BusyError, type LLM, type Msg, type ToolDecl } from "./llm";
 import { BaseError, ContractFunctionRevertedError, decodeEventLog, type Address } from "viem";
 import { getFacts, getLoan, getSales, topPayerShare, gasPrice, warungAbi, RP, reasonHash, type Chain, type Facts } from "./chain";
 import { validateProposal } from "./policy";
@@ -22,29 +22,30 @@ WHEN THE OWNER WANTS A LOAN
 5. If propose_loan returns accepted:false, explain why in plain words and what the owner can do (e.g. more on-chain sales).
 Contrast fairly with pinjol: no collateral, no due date, repayment only as a small share of each sale.`;
 
-const decls: FunctionDeclaration[] = [
-  { name: "get_business_summary", description: "Verified on-chain sales stats, credit ceiling and loan state for this owner's shop." },
+const NONE = { type: "object", properties: {} };
+export const TOOLS: ToolDecl[] = [
+  { name: "get_business_summary", description: "Verified on-chain sales stats, credit ceiling and loan state for this owner's shop.", parameters: NONE },
   {
     name: "create_payment_link", description: "Create a QR payment link the owner can show to a customer.",
-    parameters: { type: Type.OBJECT, properties: { amount_rupiah: { type: Type.INTEGER }, note: { type: Type.STRING } }, required: ["amount_rupiah"] },
+    parameters: { type: "object", properties: { amount_rupiah: { type: "integer" }, note: { type: "string" } }, required: ["amount_rupiah"] },
   },
   {
     name: "log_cash_sale", description: "Record a cash sale for bookkeeping only (does not count toward credit).",
-    parameters: { type: Type.OBJECT, properties: { amount_rupiah: { type: Type.INTEGER }, note: { type: Type.STRING } }, required: ["amount_rupiah"] },
+    parameters: { type: "object", properties: { amount_rupiah: { type: "integer" }, note: { type: "string" } }, required: ["amount_rupiah"] },
   },
   {
     name: "propose_loan", description: "Propose a micro-loan. Code validates it and the contract enforces limits; the owner accepts in their wallet.",
     parameters: {
-      type: Type.OBJECT,
+      type: "object",
       properties: {
-        principal_rupiah: { type: Type.INTEGER }, fee_percent: { type: Type.NUMBER }, repay_percent: { type: Type.NUMBER },
-        risk: { type: Type.STRING, enum: ["none", "reduce_half", "decline"] },
-        rationale_template: { type: Type.STRING, description: "Bahasa, no digits, figures only as {{placeholders}}" },
+        principal_rupiah: { type: "integer" }, fee_percent: { type: "number" }, repay_percent: { type: "number" },
+        risk: { type: "string", enum: ["none", "reduce_half", "decline"] },
+        rationale_template: { type: "string", description: "Bahasa, no digits, figures only as {{placeholders}}" },
       },
       required: ["principal_rupiah", "fee_percent", "repay_percent", "risk", "rationale_template"],
     },
   },
-  { name: "get_loan_status", description: "Current loan terms, repayment progress and status for this owner." },
+  { name: "get_loan_status", description: "Current loan terms, repayment progress and status for this owner.", parameters: NONE },
 ];
 
 export type ToolCall = { tool: string; args: unknown; result: unknown };
@@ -100,6 +101,13 @@ export async function simulateProposal(c: Chain, merchant: Address, principal: b
 
 const clampU = (x: unknown) => { const n = Number(x); return Number.isFinite(n) && n > 0 ? BigInt(Math.floor(Math.min(n, 1e15))) : 0n; };
 
+/** Convert plain numeric strings ("800000", "3.5") to numbers for the three numeric loan fields only. */
+function numify(a: any) {
+  const o = { ...(a ?? {}) };
+  for (const k of ["principal_rupiah", "fee_percent", "repay_percent"]) if (typeof o[k] === "string" && /^\d+(\.\d+)?$/.test(o[k].trim())) o[k] = Number(o[k]);
+  return o;
+}
+
 async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult): Promise<unknown> {
   const { chain } = ctx;
   switch (name) {
@@ -125,6 +133,7 @@ async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult
       return { id: l.id.toString(), status: l.status, principal_rupiah: rp(l.principal), owed_rupiah: rp(l.total), repaid_rupiah: rp(l.repaid), repay_percent_of_each_sale: l.repayBps / 100, rationale_hash: l.reasonHash };
     }
     case "propose_loan": {
+      args = numify(args); // some models send numbers as strings; the policy schema itself stays strict
       const f = await getFacts(chain, ctx.merchant);
       const verdict = validateProposal(f, args);
       // What the contract would say to exactly what the model asked for (shown in /redteam even when policy blocks first).
@@ -167,72 +176,66 @@ const norm = (t: string) => t.replace(/[.,]/g, "");
 const figures = (t: string) => (t.replace(/^\s*\d+[.)]\s/gm, "").match(/\d[\d.,]*\d|\d/g) ?? []).map(norm);
 
 /** Reply guard: every figure in the model's final text must already appear in a tool result or in what the user typed. */
-export function ungroundedFigures(reply: string, contents: Content[]): string[] {
+export function ungroundedFigures(reply: string, msgs: Msg[]): string[] {
   const allowed = new Set<string>();
-  for (const c of contents) for (const p of c.parts ?? []) {
-    if (p.functionResponse) for (const n of figures(JSON.stringify(p.functionResponse.response))) allowed.add(n);
-    else if (c.role === "user" && p.text) for (const n of figures(p.text)) allowed.add(n);
+  for (const m of msgs) {
+    if (m.role === "tool") for (const r of m.results) for (const n of figures(JSON.stringify(r.output))) allowed.add(n);
+    else if (m.role === "user" && m.text) for (const n of figures(m.text)) allowed.add(n);
   }
   return [...new Set(figures(reply))].filter((n) => !allowed.has(n));
 }
 
-const RETRYABLE = /\b(429|500|503|504|404|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/;
+export type UserInput = { text?: string; audio?: { mime: string; data: string } };
+const BUSY_TEXT = "Maaf, asisten AI sedang sibuk. Coba lagi sebentar ya.";
 
-export function makeModel(apiKey: string, primary: string, fallback: string) {
-  const ai = new GoogleGenAI({ apiKey });
-  return async (contents: Content[]) => {
-    let lastErr: unknown;
-    // free-tier Gemini sheds load with 503s: retry with growing backoff, alternating to the fallback model
-    const plan = [primary, primary, fallback, primary, fallback, fallback];
-    for (let i = 0; i < plan.length; i++) {
-      try {
-        return await ai.models.generateContent({ model: plan[i], contents, config: { systemInstruction: SYSTEM, tools: [{ functionDeclarations: decls }], temperature: 0.4 } });
-      } catch (e) {
-        lastErr = e;
-        if (!RETRYABLE.test(String((e as Error).message))) throw e;
-        await new Promise((r) => setTimeout(r, 1000 * 2 ** Math.min(i, 3)));
-      }
-    }
-    throw lastErr;
-  };
-}
-export type Model = ReturnType<typeof makeModel>;
-
-/** One user turn: the model may call tools several times; code executes them and feeds results back. */
-export async function runAgent(model: Model, ctx: AgentCtx, history: Content[], userParts: Part[]): Promise<AgentResult & { history: Content[] }> {
+/**
+ * One user turn: the model may call tools several times; code executes them and feeds results back.
+ * `budgetMs` is an absolute time budget for the whole turn, so we always answer before the serverless deadline.
+ */
+export async function runAgent(llm: LLM, ctx: AgentCtx, history: Msg[], input: UserInput, budgetMs = 48_000): Promise<AgentResult & { history: Msg[] }> {
+  const deadline = Date.now() + budgetMs;
   const out: AgentResult = { text: "", trace: [], paymentLinks: [] };
-  const contents: Content[] = [...history, { role: "user", parts: userParts }];
-  for (let step = 0; step < 6; step++) {
-    const res = await model(contents);
-    const content = res.candidates?.[0]?.content;
-    const calls = res.functionCalls ?? [];
-    if (content) contents.push(content);
-    if (!calls.length) {
-      out.text = (res.text ?? "").trim();
-      const bad = ungroundedFigures(out.text, contents);
-      if (!bad.length) break;
-      out.trace.push({ tool: "reply_guard", args: { ungrounded: bad }, result: step < 4 ? "rejected, asking model to rewrite" : "rejected, using safe fallback" });
-      if (step >= 4) { out.text = `Maaf, saya tidak bisa memastikan angka dengan benar. Silakan cek dashboard toko Anda di ${ctx.chain.cfg.APP_URL}/m/${ctx.merchant}`; break; }
-      contents.push({ role: "user", parts: [{ text: `SYSTEM CHECK: your reply contained figures that are not in any tool result: ${bad.join(", ")}. Rewrite it quoting only figures that appear in tool results, with no calculations of your own.` }] });
-      continue;
+  const msgs: Msg[] = [...history, { role: "user", text: input.text, audio: input.audio }];
+  try {
+    for (let step = 0; step < 6; step++) {
+      const res = await llm.complete(msgs, SYSTEM, TOOLS, deadline);
+      msgs.push({ role: "assistant", text: res.text, calls: res.calls, raw: res.raw });
+      if (!res.calls.length) {
+        out.text = res.text;
+        const bad = ungroundedFigures(out.text, msgs);
+        if (!bad.length) break;
+        out.trace.push({ tool: "reply_guard", args: { ungrounded: bad }, result: step < 4 ? "rejected, asking model to rewrite" : "rejected, using safe fallback" });
+        if (step >= 4) { out.text = `Maaf, saya tidak bisa memastikan angka dengan benar. Silakan cek dashboard toko Anda di ${ctx.chain.cfg.APP_URL}/m/${ctx.merchant}`; break; }
+        msgs.push({ role: "user", internal: true, text: `SYSTEM CHECK: your reply contained figures that are not in any tool result: ${bad.join(", ")}. Rewrite it quoting only figures that appear in tool results, with no calculations of your own.` });
+        continue;
+      }
+      const results: { id: string; name: string; output: unknown }[] = [];
+      for (const call of res.calls) {
+        let result: unknown;
+        try { result = await execTool(ctx, call.name, call.args ?? {}, out); } catch (e) { result = { error: (e as Error).message.slice(0, 200) }; }
+        out.trace.push({ tool: call.name, args: call.args, result });
+        results.push({ id: call.id, name: call.name, output: result });
+      }
+      msgs.push({ role: "tool", results });
     }
-    const responses: Part[] = [];
-    for (const call of calls) {
-      let result: unknown;
-      try { result = await execTool(ctx, call.name ?? "", call.args ?? {}, out); } catch (e) { result = { error: (e as Error).message.slice(0, 200) }; }
-      out.trace.push({ tool: call.name ?? "", args: call.args, result });
-      responses.push({ functionResponse: { name: call.name, response: { output: result } } });
-    }
-    contents.push({ role: "user", parts: responses });
+  } catch (e) {
+    if (!(e instanceof BusyError)) throw e;
+    out.text = BUSY_TEXT; // every provider failed or the time budget ran out: still answer
   }
   if (!out.text) out.text = "Maaf, saya belum bisa menjawab itu. Coba lagi ya.";
-  // trim old turns, but only at a plain user-text boundary so tool calls never get separated from their responses
-  let start = Math.max(0, contents.length - 14);
-  while (start < contents.length && !(contents[start].role === "user" && contents[start].parts?.some((p) => p.text))) start++;
-  return { ...out, history: contents.slice(start) };
+
+  // Persist conversation text only. Tool calls/results are live-data snapshots that go stale in minutes, and a model
+  // that sees an old "credit limit 0" repeats it instead of re-checking. Voice audio becomes a marker.
+  const kept: Msg[] = [];
+  for (const m of msgs) {
+    if (m.role === "user" && !m.internal) kept.push({ role: "user", text: m.text ?? (m.audio ? "[voice note]" : "") });
+    else if (m.role === "assistant" && m.text && !m.calls?.length && m !== msgs[msgs.length - 1]) kept.push({ role: "assistant", text: m.text });
+  }
+  if (out.text !== BUSY_TEXT) kept.push({ role: "assistant", text: out.text });
+  let start = Math.max(0, kept.length - 12);
+  while (start < kept.length && kept[start].role !== "user") start++;
+  return { ...out, history: kept.slice(start) };
 }
-
-
 
 /** Run a single tool directly, without the model. Used by /redteam's "compromised model" mode. */
 export async function runTool(ctx: AgentCtx, name: string, args: unknown): Promise<{ result: unknown; out: AgentResult }> {

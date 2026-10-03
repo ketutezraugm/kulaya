@@ -1,9 +1,9 @@
 import { Api, Bot, InputFile, InlineKeyboard } from "grammy";
 import type { Update } from "grammy/types";
-import type { Part } from "@google/genai";
 import QRCode from "qrcode";
 import { getFacts } from "./chain";
-import { runAgent } from "./agent";
+import { runAgent, type UserInput } from "./agent";
+import { transcribe } from "./llm";
 import { store } from "./store";
 import { kv } from "./kv";
 import { rupiah } from "./util";
@@ -13,7 +13,7 @@ const MAX_VOICE_BYTES = 1_000_000;
 let bot: Bot | null = null;
 
 function build(): Bot {
-  const { cfg, chain, model } = getRuntime();
+  const { cfg, chain, llm } = getRuntime();
   const b = new Bot(cfg.TELEGRAM_BOT_TOKEN);
 
   const linkPrompt = async (tgId: string) => {
@@ -37,13 +37,13 @@ function build(): Bot {
     await ctx.reply(`Pelanggan: ${f.payers}\nOmzet terverifikasi: ${rupiah(f.trailingRevenue)}\nBatas pinjaman: ${rupiah(f.creditLimit)}\nTier: ${f.tier}${f.openLoan ? `\nPinjaman ${f.openLoan.status}: ${rupiah(f.openLoan.repaid)} / ${rupiah(f.openLoan.total)}` : ""}\nDashboard: ${cfg.APP_URL}/m/${addr}`);
   });
 
-  async function handle(ctx: any, parts: Part[]) {
+  async function handle(ctx: any, input: UserInput) {
     const tg = String(ctx.from?.id);
     const merchant = await store.linkedAddress(tg);
     if (!merchant) { const l = await linkPrompt(tg); return ctx.reply(l.text, { reply_markup: l.kb }); }
     await ctx.replyWithChatAction("typing");
     try {
-      const r = await runAgent(model, { chain, merchant, sandbox: false }, await store.history(tg), parts);
+      const r = await runAgent(llm, { chain, merchant, sandbox: false }, await store.history(tg), input);
       await store.saveHistory(tg, r.history);
       await ctx.reply(r.text, r.loan ? { reply_markup: new InlineKeyboard().url("Lihat & setujui pinjaman", r.loan.acceptUrl) } : undefined);
       for (const p of r.paymentLinks) {
@@ -56,15 +56,17 @@ function build(): Bot {
     }
   }
 
-  b.on("message:text", (ctx) => handle(ctx, [{ text: ctx.message.text.slice(0, 1000) }]));
+  b.on("message:text", (ctx) => handle(ctx, { text: ctx.message.text.slice(0, 1000) }));
 
   b.on("message:voice", async (ctx) => {
     const v = ctx.message.voice;
     if (v.duration > 60 || (v.file_size ?? 0) > MAX_VOICE_BYTES) return ctx.reply("Voice note terlalu panjang (maks 60 detik).");
     const file = await ctx.api.getFile(v.file_id);
     const buf = Buffer.from(await (await fetch(`https://api.telegram.org/file/bot${cfg.TELEGRAM_BOT_TOKEN}/${file.file_path}`)).arrayBuffer());
-    // the audio is untrusted input just like text: it only ever reaches the model as a user message
-    await handle(ctx, [{ inlineData: { mimeType: "audio/ogg", data: buf.toString("base64") } }, { text: "(voice note from the shop owner: transcribe and act on it)" }]);
+    // Speech-to-text first when we can (cheap, works with any LLM); otherwise hand the audio to a model that accepts it.
+    // Either way it is untrusted input, exactly like typed text: it only ever reaches the model as a user message.
+    const text = await transcribe(cfg.GROQ_API_KEY, buf, "audio/ogg");
+    await handle(ctx, text ? { text: `(voice note) ${text.slice(0, 1000)}` } : { audio: { mime: "audio/ogg", data: buf.toString("base64") }, text: "(voice note from the shop owner: transcribe and act on it)" });
   });
 
   b.catch((e) => console.error("telegram error:", String(e.message).split("\n")[0]));
