@@ -1,6 +1,6 @@
 # Kulaya: Design Brief (handoff to Claude Design)
 
-> **Your job:** design a brand identity and two websites for **Kulaya**. Website 1 is for Indonesian small-shop owners: Bahasa Indonesia, extremely easy. Website 2 is for hackathon judges and developers: English, information-dense. A working app already exists, and an engineer (Claude Code) will rebuild the frontend from your designs. Every number, state and flow in this brief is real, so design with them, and don't invent features that aren't listed here as existing or planned.
+> **Your job:** design a brand identity and two websites for **Kulaya**. Website 1 is for Indonesian small-shop owners: Bahasa Indonesia, extremely easy. Website 2 is for hackathon judges and developers: English, information-dense. **Both must be richly illustrated with original, hand-drawn artwork made for Kulaya (§3.6–3.7). No emoji, no stock or open-source icons or illustrations, no plain template layouts.** A working app already exists, and an engineer (Claude Code) will rebuild the frontend from your designs. Every number, state and flow in this brief is real, so design with them, and don't invent features that aren't listed here as existing or confirmed (§10).
 >
 > **What you hand back** is listed in §12. Please read §12 before you start.
 
@@ -138,17 +138,86 @@ Starting values, which you can and should refine:
   - For big headline numbers, offer a friendly version as well: **"Rp 1,25 juta"** with the exact amount underneath.
   - Use tabular figures in tables.
 
-### 3.6 Icons and illustration
-- **No emoji in the web UI.** Use **one** consistent icon family: either **Lucide** or **Phosphor** (regular or duotone), which the engineer can install, or a custom set in the same style. Rounded line icons, 1.75–2 px stroke.
-- **Always icon + label** on the owner site. Never use an icon-only button, except a clearly labeled back arrow.
-- **Illustrations:**
-  - A small set of warm, simple, **flat or hand-drawn** spot illustrations of real Indonesian scenes: a warung counter, a customer scanning a QR code, a stack of goods (kulakan), a shopkeeper with a phone.
-  - Use the brand palette, and show diverse Indonesian people, including hijab, older owners, Javanese and non-Javanese settings.
-  - Avoid 3D blobs, robots, "AI brains", stock-photo business people, and floating crypto coins.
-  - Keep them light (inline SVG, a few KB each). Users are on cheap data plans.
-- **Optional signature motif:** transaction and receipt cards styled like a **nota** (receipt paper): a slightly perforated or zig-zag edge and a mono-style amount. This makes sales history instantly familiar.
+### 3.6 Visual richness: everything original and handmade
+**This is a firm requirement from the product owner.** The site must feel **lively, crafted and illustrated**, the opposite of a sparse template. Kulaya should look like someone drew it for Indonesian warung owners, not assembled it from a kit.
 
-### 3.7 Voice and tone (owner site, Bahasa)
+- **Everything is originally drawn for Kulaya.**
+  - No open-source or stock assets: no Lucide, Phosphor, Heroicons, Material, Font Awesome, unDraw, Storyset, Humaaans, Open Peeps, Freepik, Blush.
+  - No AI-stock-looking art.
+  - No emoji, and no Unicode symbols used as graphics (✓ ⏳ ★ → • are not icons).
+  - Icons, illustrations, patterns, badges, dividers, chart decorations and empty states are **all custom SVG** in one consistent Kulaya hand.
+- **Not a simple structure.**
+  - Avoid the generic stack of "heading, paragraph, row of identical cards".
+  - Compose each screen like a crafted page: illustration integrated with content, varied card shapes, signature motifs (§3.7), and layered paper textures.
+  - **Rich visuals must never make the owner site harder to use.** Interaction stays dead simple (one obvious action per screen, §5). The richness is in the drawing, not in more buttons or options.
+- **Style direction (refine and define it):**
+  - A warm, slightly **hand-drawn line + flat color** style.
+  - Lines feel like a confident ink pen or marker; fills come only from the brand palette (nila, kunyit, kertas, daun, bata, aren).
+  - Light paper grain or halftone is allowed, done with SVG patterns rather than bitmaps.
+  - People and places are **recognizably Indonesian**: warung awnings, gerobak (food carts), etalase (glass display cases), plastic stools, banners hand-painted with prices, sachets hanging in rows, sacks of rice, crates of eggs, a motorbike parked out front, a jar of kerupuk.
+  - Show diverse people: older owners, hijab, Javanese and non-Javanese settings, a nephew helping his aunt.
+  - Avoid 3D blobs, robots, "AI brains", stock business people and floating crypto coins.
+- **Icons:**
+  - A **custom-drawn icon set** in the same hand as the illustrations: rounded, about 2 px stroke, with a touch of turmeric fill on key icons.
+  - About 40 icons; the full list is in §3.7.
+  - **Always icon + label** on the owner site, except a clearly drawn back arrow.
+- **Weight:** owners are on cheap data plans, so all art must be **optimized inline SVG**.
+  - Spot illustrations should be at most ~15 KB each, and hero scenes at most ~40 KB.
+  - Below-the-fold art is lazy-loaded, with no bitmaps.
+  - Page budget is ~500 KB including art.
+- **Motion (optional, subtle):**
+  - Small SVG/CSS animations add life: steam rising from a bakso bowl, the awning swaying, a coin dropping into a jar on "Pembayaran diterima!", a progress bar filling.
+  - Keep them light and loop-free except for tiny idle details, and turn them all off under *reduce motion*.
+
+### 3.7 Illustration and graphics inventory (please draw all of these)
+**Signature motifs (used across the site):**
+- **The awning stripe border:** the scalloped warung awning edge as a top border on the header, hero sections and key cards.
+- **The nota (receipt):** every sale, offer summary and payment success is a receipt-paper card with a zig-zag or perforated edge, a hand-stamp, and handwritten-style amounts.
+- **The celengan / toples (coin jar):** a growing jar that visualizes "batas modal" and repayment progress, filling with coins as the limit grows or the loan is repaid.
+- **The level-up stall:** the four levels are drawn as one stall that grows. **Perintis** is a gerobak (food cart), **Berkembang** is a warung with an awning, **Maju** is a shop with an etalase, and **Unggul** is a busy toko with a sign. Each is used as a badge (small) and as an illustration (large).
+- **A batik-inspired pattern** (original, drawn for Kulaya, e.g. a parang or kawung rhythm reinterpreted with awning and coin shapes) for backgrounds, section dividers and the poster border.
+- **Hand-drawn chart styling:** the sales chart bars look like stacked goods or awning stripes, with a hand-drawn baseline and today's bar marked with a little flag.
+
+**Owner site scenes:**
+| Where | Illustration |
+|---|---|
+| Landing hero | A large scene: Bu Sri at her bakso warung, a customer scanning a QR code taped to the etalase, steam from the bowls, a full coin jar on the counter |
+| Landing "Cara kerjanya" | 3 scenes: (1) a customer scans the QR, (2) Bu Sri reads an offer on her phone with the assistant character, (3) a stream of coins splits off each sale into a small jar marked "cicilan" |
+| Landing "Bukan pinjol" | A contrast pair: the pinjol side shows a phone flooded with angry calls and a debt-collector silhouette (drawn gently, not scary); the Kulaya side is a calm warung with the jar filling |
+| Landing worked example | A drawn nota showing the Rp 100.000 → Rp 10.000 / Rp 90.000 split |
+| Tutorial cards (5) | One scene per card (§7.2), same characters throughout |
+| Setup: no wallet yet | The nephew helping his aunt install the wallet app, plus 3 small step drawings |
+| Before every wallet popup | A drawn phone showing a generic confirmation popup with the button highlighted and a hand pointing at it |
+| Shop registered | Bu Sri hanging a new "Kulaya" sign on her warung |
+| Home greeting | A small time-of-day vignette (morning: opening the shutter; noon: busy; evening: lights on) |
+| Capital card states | The coin jar at different fill levels; an envelope for "offer waiting"; a trophy stall for "lunas / level up"; a soft resting scene for the gentle written-off state |
+| Receive payment | The QR framed in a drawn stand (a little acrylic stand on the counter) |
+| Payment received | A coin dropping into the jar with a small sparkle drawn by hand |
+| Capital page | A visual equation drawn as receipt + jar, and the four-level stall ladder |
+| Active loan | The jar filling as cicilan comes in, with a calm "pelan-pelan juga tidak apa-apa" mood |
+| History empty state | An empty etalase with a sign "Belum ada penjualan" |
+| AI chat | **The assistant character** (see below), plus empty-chat art |
+| Help / FAQ | Small spot art per FAQ topic (shield for safety, sprout for levels, sachet for fees, phone for wallet, map of Indonesia for "who funds it") |
+| Errors and states | Slow connection (a tangled kite string), offline (a closed shutter), busy (a crowded stall), cancelled (a friendly shrug), session expired (a door to knock on again) |
+| Customer payment page | The shop's awning at the top; success = a drawn thank-you nota with a stamp |
+| Test-network banner | A tiny drawn "uji coba" stamp |
+| Printable poster | A full illustrated A5/A6 poster: awning top, shop name, QR, 3 pictogram steps, batik border |
+
+**The assistant character (Asisten Kulaya):**
+- A friendly, original mascot, **not a robot**. For example a warm "teman warung" figure or an anthropomorphic coin jar with a little peci or apron.
+- Used for the chat avatar, tutorial guide, empty states and the Telegram bot avatar variant.
+- Provide 5–6 expressions/poses: greeting, thinking, explaining, celebrating, apologetic (busy or error), pointing.
+
+**Developer / judge site visuals** (still original and in the same hand, but more diagrammatic):
+- A **hand-drawn architecture diagram** (customer → contract → AI → owner → pool → ERC-8004) as a single illustrated system map. Not boxes and arrows from a diagram tool.
+- **The security shields** drawn as four nested shields or a gate pipeline, used on the overview and in the red-team results.
+- A **red-team console illustration**: the attacker's arrows bouncing off the shields.
+- Small custom diagrams for the gasless flow, the loan lifecycle (Proposed → Active → Repaid / Defaulted) and the pool protections.
+- Section header illustrations for each developer page, plus original **badges** for the three hackathon tracks.
+
+**Custom icon list (about 40, all drawn):** beranda, terima bayar (QR), modal (jar), bantuan, tanya (chat bubble with the mascot's face), riwayat (nota), pelanggan, penjualan, level, info "?", kembali, tutup, salin, bagikan, unduh, cetak, WhatsApp-style share, Telegram, dompet (wallet app), konfirmasi, lunas (check-stamp), menunggu (hourglass-ish clock), gagal, peringatan, aman (shield), jaminan-tidak-perlu, tanpa penagih, biaya (sachet with Rp), cicilan (coin split), kalender, waktu, koneksi, refresh, keluar, pengaturan, bahasa (EN), external link, BscScan/verify, code, copy-address.
+
+### 3.8 Voice and tone (owner site, Bahasa)
 - Address the user as **"Anda"**. The assistant may say **"Bapak/Ibu"** in greetings.
 - Short sentences, everyday words, **one idea per sentence**.
 - Be reassuring and concrete: say what will happen, what it costs, and that it's safe.
@@ -185,7 +254,7 @@ Has 3–5 minutes per project, has seen 80 submissions, and is technical. Wants 
 4. **Always show what happens next, and the cost.** Before any action involving money, show a **summary card in plain words** with a **worked example**.
 5. **Never a dead end.** Every state has a helpful next step, including empty, error and waiting states. Empty states teach, for example: *"Belum ada penjualan. Tunjukkan kode QR ini ke pelanggan."*
 6. **Human errors, not technical ones.** Never show "RPC error", "revert" or hashes. Say *"Koneksi sedang lambat. Coba lagi."* with a **Coba lagi** button. Technical details can sit behind a "Detail untuk teknisi" toggle.
-7. **Status = icon + word + color**, for example ✓ *Lunas* in green, ⏳ *Menunggu konfirmasi* in amber. (Use real icons, not these glyphs.)
+7. **Status = drawn icon + word + color**, for example the check-stamp icon with *Lunas* in green, or the clock icon with *Menunggu konfirmasi* in amber. Never use Unicode glyphs or emoji for status.
 8. **Learnable by doing:**
    - A **first-run tutorial** (§7.2), skippable and replayable from Bantuan.
    - A **"?" info button** next to every unusual term (Batas modal, Level toko, Cicilan otomatis), opening a short bottom sheet with an example.
@@ -199,7 +268,7 @@ Has 3–5 minutes per project, has seen 80 submissions, and is technical. Wants 
 10. **Built for weak phones and slow data:**
     - System font scaling must not break layouts. Test at 130% text size.
     - Respect *reduce motion*.
-    - No heavy images or video. Pages under ~300 KB.
+    - No bitmaps or video. Art is optimized inline SVG, lazy-loaded below the fold. Pages under ~500 KB including illustrations (§3.6).
     - Skeleton loading with text, for example *"Memuat data toko…"*.
 11. **Forgiving.** Back is always visible. Confirmations for anything irreversible. Nothing important behind gestures only (no swipe-only).
 12. **Telegram is a first-class partner.** Many owners will mainly use the **Telegram bot** (chat and voice notes). The website should keep pointing to it: *"Lebih mudah lewat Telegram: kirim pesan suara saja."*
@@ -280,19 +349,19 @@ This is **the hardest UX moment**, because a crypto wallet is unavoidable today.
    - *"Sudah punya"* leads to connect.
    - *"Belum punya"* leads to a **mini-guide**: pick one app (we recommend one, e.g. MetaMask or Trust Wallet), 3 illustrated steps to install and create, a **"Minta bantuan keluarga"** tip, and a *"Sudah selesai, lanjut"* button.
 2. **"Hubungkan aplikasi dompet"**. **Before** the wallet pops up, show a **preparation screen**: an illustration of the confirmation popup, the text *"Nanti akan muncul jendela dari aplikasi dompet. Tekan **Hubungkan** / **Konfirmasi**. Ini gratis dan tidak memindahkan uang apa pun."*, then the button **"Saya mengerti, lanjutkan"**.
-3. **Name the shop:** *"Nama toko Anda?"* (for example "Bakso Bu Sri"), plus an optional nickname for greetings. This is new and the engineer will store it.
+3. **Name the shop:** *"Nama toko Anda?"* (for example "Bakso Bu Sri"), plus an optional nickname for greetings. This will be built (stored by the engineer).
 4. **Register.** Another prepared confirmation: *"Konfirmasi sekali untuk mendaftarkan toko. Gratis."*
 5. **Done.** A celebration that is subtle, with no confetti overload: *"Toko Anda sudah terdaftar!"* The next step: *"Coba terima pembayaran pertama"*, linking to Terima Bayar.
 
 **States to design:**
 - No wallet app detected on this phone.
-- Opened in a normal browser on a phone, which needs to open in the wallet app or use the planned wallet picker (§10).
+- Opened in a normal browser on a phone, which needs to open in the wallet app or use the wallet picker (§10, will be built).
 - Wrong network: *"Aplikasi dompet perlu pindah jaringan. Tekan Setuju."*
 - The user cancelled the popup: *"Tidak apa-apa. Coba lagi kapan saja."*
 - Already registered: skip ahead.
 
 ### 7.4 Login `/masuk`
-- Option A: **"Masuk lewat Telegram"**. This is **planned** (§10): the bot sends a one-tap login link. It's the easiest option, so make it the primary choice if Telegram is linked.
+- Option A: **"Masuk lewat Telegram"**. This will be built (§10): the bot sends a one-tap login link. It's the easiest option, so make it the primary choice if Telegram is linked.
 - Option B: **"Masuk dengan aplikasi dompet"**, with the same prepared confirmation as above.
 
 ### 7.5 Home `/toko` (Beranda)
@@ -318,7 +387,7 @@ The order matters, so think hard about hierarchy.
    - **"Bagikan"** (WhatsApp share of the link).
    - **"Unduh / Cetak"**.
 3. A **clear, friendly notice**: *"Ini bukan QRIS. Pelanggan membayar dengan aplikasi dompet, atau 'dompet demo' untuk mencoba."* With an info button explaining why. The roadmap says a QRIS bridge is planned.
-4. **"Pembayaran diterima!"** feedback (planned): when a payment for this amount arrives, the screen updates. Design this success state: a big check, the amount, *"Rp 5.000 dipotong untuk cicilan"* if a loan is active, and *"Terima pembayaran lagi"*.
+4. **"Pembayaran diterima!"** feedback (will be built): when a payment for this amount arrives, the screen updates. Design this success state: a big check, the amount, *"Rp 5.000 dipotong untuk cicilan"* if a loan is active, and *"Terima pembayaran lagi"*.
 5. A **link to the printable stall poster** (§7.12).
 
 ### 7.7 Capital `/toko/modal`
@@ -341,7 +410,7 @@ The order matters, so think hard about hierarchy.
   - Then the prepared wallet-confirmation screen, then success: *"Rp 1.000.000 sudah masuk ke aplikasi dompet Anda."*
 - **Active loan view:** a big progress ring or bar, *"Sudah lunas Rp X dari Rp Y"*, a list of the latest deductions (each sale showing *"Rp 2.000 untuk cicilan"*), and *"Kalau jualan sepi, cicilan ikut berkurang. Tidak apa-apa."*
 - **After a 14-day pause:** design an **early, gentle reminder state**. If no sales for some days: *"Belum ada penjualan 7 hari. Kalau 14 hari tidak ada penjualan, modal dianggap tidak dilanjutkan."* (14 days without sales means the loan can be written off.)
-- **History of loans:** a simple list. This is **new**; the engineer will add loan history.
+- **History of loans:** a simple list. This will be built by the engineer.
 
 ### 7.8 Sales history `/toko/riwayat`
 - A **30-day bar chart** (simple, labeled, with today highlighted) plus totals for Hari ini / 7 hari / 30 hari.
@@ -517,7 +586,7 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
 
 ## 10. Technical reality: what the engineer can and cannot build
 
-**The stack:** Next.js (App Router) on Vercel, hand-written CSS with CSS variables (no Tailwind), Google Fonts via `next/font`, inline SVG icons (Lucide or Phosphor), and QR codes rendered by `qrcode.react`. Charts are simple SVG or CSS bars, so don't design complex chart types. Keep animation minimal (CSS transitions only).
+**The stack:** Next.js (App Router) on Vercel, hand-written CSS with CSS variables (no Tailwind), Google Fonts via `next/font`, **your custom SVG icons and illustrations inlined as React components**, and QR codes rendered by `qrcode.react`. Charts are SVG built from data. Styled bars (stacked goods, awning stripes) are fine, but avoid chart types that need a charting library. Animation is CSS or SVG only (no animation libraries): keyframes, transitions, and SVG transforms are all fine.
 
 **Exists today, so design it:**
 - Wallet connect (injected wallet: MetaMask, Trust, Binance Web3 browser).
@@ -528,7 +597,7 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
 - Linking Telegram ↔ wallet via a one-time code.
 - Everything in §8.
 
-**Planned: design for these, the engineer will implement them if your design uses them:**
+**Confirmed: all of these will be built, so design them as real, first-class features:**
 - **Shop name and nickname** stored at onboarding.
 - **"Masuk lewat Telegram"** one-tap login link sent by the bot, for viewing and chatting without the wallet.
 - **Wallet picker** (WalletConnect / Reown) so a normal phone browser can open the user's wallet app. Without it, phone users must open the site *inside* the wallet app's browser.
@@ -556,6 +625,9 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
 
 - Dark neon themes, purple or blue gradients, glows, glassmorphism, grain-gradient blobs.
 - Emoji as icons, ✨ sparkles, 🚀 rockets, robot or brain imagery, floating 3D coins.
+- **Any emoji or Unicode symbol used as a graphic** (✓ ⏳ ★ → used as icons), anywhere on either site.
+- **Open-source or stock visuals:** icon packs (Lucide, Phosphor, Heroicons, Material, Font Awesome), illustration kits (unDraw, Storyset, Humaaans, Open Peeps, Blush), Freepik/stock art, or generic AI-generated stock imagery. Everything is drawn for Kulaya.
+- **Bare, text-only screens** or a plain stack of identical cards. Every screen should have a drawn element that adds meaning (§3.7).
 - Inter, Geist, Space Grotesk and Poppins defaults.
 - The generic landing template: centered hero with a gradient headline, a 3×2 bento grid of vague features, a logo strip of fake partners, a stats row of "10x faster".
 - English or jargon on the owner site. Icon-only buttons. Text under 14 px. Gray-on-gray low contrast.
@@ -566,7 +638,7 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
 
 ## 12. What to hand back (please follow this format, it makes implementation exact)
 
-1. **Brand sheet (one page/frame):**
+1. **Brand sheet (one page/frame)**, including an **illustration style guide** (line weight, palette use, how people and places are drawn, do/don't examples) so new art can be made consistently later:
    - The logo in all variants as **SVG** (full color, one-color dark, reversed, icon only, horizontal lockup, favicon 16/32, Telegram avatar 512 round, and OG image 1200×630).
    - Clear space and minimum size.
    - The final slogan(s).
@@ -596,7 +668,7 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
    - Every screen and state listed in §7 and §8.
    - Name frames exactly by route plus state, e.g. `toko/modal — offer-waiting`, `bayar — success`, `protocol/redteam — blocked-by-contract`.
 5. **Final copy deck:** all Bahasa microcopy per screen in a simple table (key → text), including errors and empty states, so the engineer doesn't improvise wording.
-6. **Illustrations** as SVG (light, palette-only).
+6. **All original artwork as optimized SVG**, every item in the §3.7 inventory: illustrations, the assistant character (5–6 poses), the four level-stall badges, signature motifs (awning border, nota card, coin jar at several fill levels, batik-inspired pattern), the ~40 custom icons (24 px grid, consistent stroke), developer-site diagrams and track badges, and any small animation specs. Name files by inventory item (e.g. `ill-landing-hero.svg`, `icon-terima-bayar.svg`, `badge-level-maju.svg`, `mascot-celebrate.svg`). Nothing traced or adapted from open-source or stock packs.
 7. **The printable QR poster** (A5 + A6) and the **Telegram avatar**.
 8. **Implementation notes, if any:** interactions, transitions, and what scrolls versus what's fixed.
 
@@ -609,4 +681,5 @@ Sale notes look like: "bakso 20 mangkok", "es teh 30 gelas", "nasi kuning 15 por
 - Bu Sri can, **without help after setup**, (a) show a payment QR, (b) understand her capital limit and why, and (c) accept an offer while understanding exactly what she'll repay and how. Test it mentally with "would my aunt understand this?"
 - A judge understands what Kulaya is, why it's safe, and that it's real **within 60 seconds** of landing on `/protocol`, and can verify it on BscScan in two clicks.
 - Kulaya is **recognizable** with the logo, colors and type alone, and looks like nothing else in a lineup of 80 hackathon projects.
+- **Every screen feels alive and hand-made:** original illustrations, the mascot, signature motifs, custom icons. There is not a single emoji, stock asset or open-source icon, and still only one obvious action per owner screen.
 - Nothing is jargon on the owner site, and nothing is untrue anywhere.
