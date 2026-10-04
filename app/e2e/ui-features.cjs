@@ -77,9 +77,14 @@ const check = (n, ok, x = "") => { console.log(`${ok ? "PASS" : "FAIL"}  ${n}${x
   const old = await fetch(`${BASE}/pay/${acct.address}?amount=10000`, { redirect: "manual" });
   check("old /pay/... link redirects to /bayar/... with its query", old.status === 308 && (old.headers.get("location") || "").includes(`/bayar/${acct.address}?amount=10000`), String(old.status));
   const pub = await ctx2.newPage();
-  await pub.goto(`${BASE}/t/${acct.address}`, { waitUntil: "load" });
-  await pub.getByTestId("profile-name").waitFor({ timeout: 60000 });
-  check("public profile page shows the shop name", (await pub.getByTestId("profile-name").innerText()) === "Bakso Uji UI 2");
+  let shown = "";
+  for (let i = 0; i < 6 && shown !== "Bakso Uji UI 2"; i++) { // the public profile API is edge-cached for a few seconds after a rename
+    if (i) await pub.waitForTimeout(8000);
+    await pub.goto(`${BASE}/t/${acct.address}`, { waitUntil: "load" });
+    await pub.getByTestId("profile-name").waitFor({ timeout: 60000 });
+    shown = await pub.getByTestId("profile-name").innerText();
+  }
+  check("public profile page shows the shop name", shown === "Bakso Uji UI 2", shown);
 
   await b.close();
   console.log(`\n${fails === 0 ? "ALL PASSED" : fails + " FAILED"}`);
