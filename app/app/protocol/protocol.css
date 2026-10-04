@@ -74,3 +74,5 @@
 .p-addr code { font: 500 14px/1.4 var(--k-font-mono); }
 .p-addr button, .p-addr a { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; font: 600 14px/1 var(--k-font-body); color: var(--k-color-heading); text-decoration: none; }
 .p-addr a { background: var(--k-color-tint); }
+
+@media (max-width: 900px) { .p-split { grid-template-columns: minmax(0, 1fr) !important; } }
