@@ -1,4 +1,5 @@
 import { BusyError, type LLM, type Msg, type ToolDecl } from "./llm";
+import { plainText } from "./format";
 import { BaseError, ContractFunctionRevertedError, decodeEventLog, type Address } from "viem";
 import { getFacts, getLoan, getSales, topPayerShare, gasPrice, warungAbi, RP, reasonHash, type Chain, type Facts } from "./chain";
 import { validateProposal } from "./policy";
@@ -6,7 +7,7 @@ import { store } from "./store";
 import { withLock } from "./kv";
 
 export const SYSTEM = `You are Kulaya, a bookkeeping and micro-credit assistant for Indonesian small-shop owners (UMKM), chatting on Telegram.
-Reply in the user's language (default Bahasa Indonesia). Be short, warm and plain: no jargon, no markdown tables.
+Reply in the user's language (default Bahasa Indonesia). Be short, warm and plain: no jargon. Write PLAIN TEXT only: the chat does not render Markdown, so never use ** or __ for bold, # headings, backticks or tables. Short lines are fine; for a list put "-" at the start of each line.
 
 HARD RULES
 - Shop data changes constantly (payments arrive, limits move). Figures mentioned earlier in this chat are OUTDATED. In every turn where the user asks about sales, credit limit, loan eligibility or a loan, call get_business_summary (and get_loan_status for loans) FIRST and answer only from those fresh results. Never reuse an earlier answer.
@@ -223,6 +224,7 @@ export async function runAgent(llm: LLM, ctx: AgentCtx, history: Msg[], input: U
     out.text = BUSY_TEXT; // every provider failed or the time budget ran out: still answer
   }
   if (!out.text) out.text = "Maaf, saya belum bisa menjawab itu. Coba lagi ya.";
+  out.text = plainText(out.text); // the reply guard already ran on the raw text; now strip Markdown for plain-text chats
 
   // Persist conversation text only. Tool calls/results are live-data snapshots that go stale in minutes, and a model
   // that sees an old "credit limit 0" repeats it instead of re-checking. Voice audio becomes a marker.
