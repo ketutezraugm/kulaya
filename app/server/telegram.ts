@@ -5,6 +5,7 @@ import { getFacts } from "./chain";
 import { runAgent, type UserInput } from "./agent";
 import { transcribe } from "./llm";
 import { store } from "./store";
+import { getProfile } from "./profile";
 import { kv } from "./kv";
 import { rupiah } from "./util";
 import { getRuntime } from "./runtime";
@@ -12,7 +13,7 @@ import { getRuntime } from "./runtime";
 const MAX_VOICE_BYTES = 1_000_000;
 let bot: Bot | null = null;
 
-function build(): Bot {
+export function buildBot(): Bot {
   const { cfg, chain, llm } = getRuntime();
   const b = new Bot(cfg.TELEGRAM_BOT_TOKEN);
 
@@ -25,7 +26,18 @@ function build(): Bot {
     const tg = String(ctx.from?.id);
     await ctx.reply("Halo! Saya Kulaya 👋\nCatat penjualan, terima pembayaran QR, dan dapatkan modal usaha tanpa agunan: cukup ngobrol dengan saya (teks atau voice note).");
     if (!(await store.linkedAddress(tg))) { const l = await linkPrompt(tg); await ctx.reply(l.text, { reply_markup: l.kb }); }
-    else await ctx.reply("Dompet Anda sudah terhubung. Coba tanya: \"Gimana penjualan saya minggu ini?\"");
+    else {
+      const who = (await getProfile((await store.linkedAddress(tg))!))?.nickname;
+      await ctx.reply(`${who ? `Selamat datang kembali, ${who}! ` : ""}Dompet Anda sudah terhubung. Coba tanya: "Gimana penjualan saya minggu ini?" Ketik /masuk untuk membuka Kulaya di browser.`);
+    }
+  });
+
+  // One-tap login to the website: a single-use link, valid 10 minutes, sent only to this (already linked) chat.
+  b.command("masuk", async (ctx) => {
+    const tg = String(ctx.from?.id);
+    if (!(await store.linkedAddress(tg))) { const l = await linkPrompt(tg); return ctx.reply("Hubungkan dompet toko Anda dulu, baru bisa masuk lewat Telegram.", { reply_markup: l.kb }); }
+    const url = `${cfg.APP_URL}/masuk?t=${await store.newLoginCode(tg)}`;
+    await ctx.reply("Tekan tombol di bawah untuk masuk ke Kulaya. Tautan ini berlaku 10 menit dan hanya bisa dipakai sekali, jadi jangan dibagikan ke orang lain.", { reply_markup: new InlineKeyboard().url("Masuk ke Kulaya", url) });
   });
 
   b.command("link", async (ctx) => { const l = await linkPrompt(String(ctx.from?.id)); await ctx.reply(l.text, { reply_markup: l.kb }); });
@@ -76,7 +88,7 @@ function build(): Bot {
 /** Process one Telegram update. Telegram redelivers on slow replies, so each update id is handled at most once. */
 export async function handleTelegramUpdate(update: Update): Promise<void> {
   if (!(await kv.setNX(`tgupd:${update.update_id}`, 1, 3600))) return;
-  bot ??= build();
+  bot ??= buildBot();
   await bot.init();
   await bot.handleUpdate(update);
 }

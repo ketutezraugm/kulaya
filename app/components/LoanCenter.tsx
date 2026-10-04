@@ -53,7 +53,7 @@ export function LoanCenter({ shop, account, wallet, onChanged, askAI }: { shop: 
           </div>
           <div className="row" style={{ marginTop: 10 }}>
             <button onClick={accept} disabled={busy || !wallet}>{busy ? "Waiting…" : `Accept ${rupiah(l.principal)}`}</button>
-            <span className="sub">Valid until {new Date(expiry).toLocaleString()}. Gasless: you only sign.</span>
+            <span className="sub">Valid until {new Date(expiry).toLocaleString()}. Gasless: you only sign.{!wallet && " Connect your wallet app to accept (signing in through Telegram can view, but only a wallet can confirm)."}</span>
           </div>
         </>
       )}

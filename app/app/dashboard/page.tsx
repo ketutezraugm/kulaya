@@ -3,16 +3,25 @@ import { useEffect, useMemo, useState } from "react";
 import { Chat } from "@/components/Chat";
 import { LoanCenter } from "@/components/LoanCenter";
 import { QrCard } from "@/components/QrCard";
+import { loadSession, getToken, signIn } from "@/lib/auth";
 import { RelayUnavailable, gaslessRegister } from "@/lib/gasless";
 import { dayLabel, sumUnits, useShop } from "@/lib/shop";
-import { WARUNG, warungAbi, errText, rupiah, short, txLink, useWallet, write } from "@/lib/web3";
+import { BOT_API, WARUNG, warungAbi, errText, rupiah, short, txLink, useWallet, write } from "@/lib/web3";
+import type { Address } from "viem";
 import { TG_URL } from "@/lib/brand";
 
 const DEMO = process.env.NEXT_PUBLIC_DEMO_MERCHANT;
 
 export default function Dashboard() {
   const { account, wallet, connect, error } = useWallet();
-  const { shop, error: loadErr, reload } = useShop(account);
+  // an owner can also arrive through Telegram one-tap login: then there is a session but no connected wallet (read + chat only)
+  const [sessionAddr, setSessionAddr] = useState<Address | null>(null);
+  useEffect(() => { setSessionAddr(loadSession()?.address ?? null); }, []);
+  const viewer: Address | null = account ?? sessionAddr;
+  const { shop, error: loadErr, reload } = useShop(viewer);
+  const [editName, setEditName] = useState(false);
+  const [nameDraft, setNameDraft] = useState({ name: "", nickname: "" });
+  const [nameErr, setNameErr] = useState("");
   const [inject, setInject] = useState({ n: 0, text: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -34,6 +43,20 @@ export default function Dashboard() {
     } catch (e) { setErr(errText(e)); } finally { setBusy(false); }
   }
 
+  async function saveName() {
+    if (!viewer) return;
+    setNameErr("");
+    try {
+      let token = getToken(viewer);
+      if (!token) { if (!wallet || !account) throw new Error("Hubungkan dompet atau masuk lewat Telegram dulu."); token = await signIn(wallet, account); }
+      const r = await fetch(`${BOT_API}/profile`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify(nameDraft) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error ?? "gagal menyimpan");
+      setEditName(false);
+      await reload();
+    } catch (e) { setNameErr(errText(e)); }
+  }
+
   const stats = useMemo(() => {
     if (!shop) return null;
     const { days, params: p } = shop;
@@ -41,13 +64,13 @@ export default function Dashboard() {
     const byRevenue = (shop.trailing * BigInt(p.maxLoanBps)) / 10_000n;
     const tierCeiling = p.baseTierMax << BigInt(shop.tier);
     const nextCeiling = shop.tier < 3 ? p.baseTierMax << BigInt(shop.tier + 1) : null;
-    const byPayer = new Map<string, { total: bigint; n: number }>();
-    for (const s of shop.sales) { const e = byPayer.get(s.payer) ?? { total: 0n, n: 0 }; e.total += BigInt(s.amount); e.n++; byPayer.set(s.payer, e); }
+    const byPayer = new Map<number, { total: bigint; n: number }>(); // friendly customer number, stable per shop
+    for (const s of shop.sales) { const e = byPayer.get(s.customerNo) ?? { total: 0n, n: 0 }; e.total += BigInt(s.amount); e.n++; byPayer.set(s.customerNo, e); }
     const top = [...byPayer.entries()].sort((a, b) => (b[1].total > a[1].total ? 1 : -1)).slice(0, 5);
     return { max, today: days[29].v, week: sumUnits(days.slice(-7)), byRevenue, tierCeiling, nextCeiling, top };
   }, [shop]);
 
-  if (!account) {
+  if (!viewer) {
     return (
       <>
         <h1>Your shop dashboard</h1>
@@ -55,7 +78,7 @@ export default function Dashboard() {
         <div className="card">
           <button onClick={connect}>Connect your shop wallet</button>
           {error && <p className="bad">{error}</p>}
-          <p className="sub" style={{ margin: "10px 0 0" }}>New here? Register your shop for free after connecting: it's gasless. You can also use the <a href={TG_URL}>Telegram bot</a> with the same wallet.</p>
+          <p className="sub" style={{ margin: "10px 0 0" }}>New here? Register your shop for free after connecting: it's gasless. Already linked in the <a href={TG_URL}>Telegram bot</a>? Send <b>/masuk</b> there for a one-tap login.</p>
         </div>
         {DEMO && <p className="sub">Just looking? <a href={`/m/${DEMO}`}>See a live demo shop</a>.</p>}
       </>
@@ -65,8 +88,18 @@ export default function Dashboard() {
   const header = (
     <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end" }}>
       <div>
-        <h1 style={{ marginBottom: 2 }}>Your shop</h1>
-        <p className="sub" style={{ margin: 0 }}><span className="mono">{short(account)}</span>{shop?.registered && <> · <span className="chip">Tier {shop.tier}</span></>} · <a href={`/m/${account}`}>Public page</a></p>
+        <h1 style={{ marginBottom: 2 }}>{shop?.profile?.name ?? "Your shop"}</h1>
+        <p className="sub" style={{ margin: 0 }}><span className="mono">{short(viewer)}</span>{shop?.registered && <> · <span className="chip">Tier {shop.tier}</span></>} · <a href={`/m/${viewer}`}>Public page</a>{shop?.registered && <> · <a href="#" onClick={(e) => { e.preventDefault(); setNameDraft({ name: shop?.profile?.name ?? "", nickname: shop?.profile?.nickname ?? "" }); setEditName(true); }}>{shop?.profile?.name ? "Edit name" : "Name your shop"}</a></>}</p>
+        {editName && (
+          <div className="card" style={{ marginTop: 10 }}>
+            <label style={{ marginTop: 0 }}>Shop name (public)</label>
+            <input value={nameDraft.name} maxLength={40} onChange={(e) => setNameDraft({ ...nameDraft, name: e.target.value })} placeholder="e.g. Bakso Bu Sri" />
+            <label>What should we call you? (private, used in greetings)</label>
+            <input value={nameDraft.nickname} maxLength={20} onChange={(e) => setNameDraft({ ...nameDraft, nickname: e.target.value })} placeholder="e.g. Bu Sri" />
+            <div className="row" style={{ marginTop: 10 }}><button onClick={saveName}>Save</button><button className="ghost" onClick={() => setEditName(false)}>Cancel</button></div>
+            {nameErr && <p className="bad" style={{ margin: "8px 0 0" }}>{nameErr}</p>}
+          </div>
+        )}
       </div>
       <span className="sub" style={{ fontSize: 13 }}>{shop ? `Updated ${Math.max(0, Math.round((Date.now() - shop.updatedAt) / 1000))}s ago` : "Loading…"}</span>
     </div>
@@ -81,7 +114,7 @@ export default function Dashboard() {
         <div className="card">
           <b>Register your shop</b>
           <p className="sub" style={{ margin: "6px 0 12px" }}>One free signature creates your shop on-chain. After that, every payment you receive builds your verified sales history.</p>
-          <button onClick={register} disabled={busy || !wallet}>{busy ? "Registering…" : "Register my shop (no gas)"}</button>
+          {wallet ? <button onClick={register} disabled={busy}>{busy ? "Registering…" : "Register my shop (no gas)"}</button> : <button onClick={connect}>Connect wallet to register</button>}
           {(err || error) && <p className="bad">{err || error}</p>}
         </div>
       </>
@@ -125,7 +158,7 @@ export default function Dashboard() {
                     <tr key={x.tx}>
                       <td>{dayLabel(BigInt(x.epoch), p.epochLength)}</td><td>{rupiah(BigInt(x.amount))}</td>
                       <td>{BigInt(x.repaidCut) > 0n ? <span className="chip">{rupiah(BigInt(x.repaidCut))}</span> : "—"}</td>
-                      <td className="mono">{short(x.payer)}</td><td>{x.memo || "—"}</td><td><a href={txLink(x.tx)} target="_blank" rel="noreferrer">tx</a></td>
+                      <td>Pelanggan #{x.customerNo}</td><td>{x.memo || "—"}</td><td><a href={txLink(x.tx)} target="_blank" rel="noreferrer">tx</a></td>
                     </tr>
                   ))}
                 </tbody>
@@ -138,7 +171,7 @@ export default function Dashboard() {
             <>
               <h2>Top customers</h2>
               <div className="card">
-                <table><tbody>{s.top.map(([a, v]) => <tr key={a}><td className="mono">{short(a)}</td><td>{rupiah(v.total)}</td><td className="sub">{v.n} payment{v.n > 1 ? "s" : ""}</td></tr>)}</tbody></table>
+                <table><tbody>{s.top.map(([a, v]) => <tr key={a}><td>Pelanggan #{a}</td><td>{rupiah(v.total)}</td><td className="sub">{v.n} payment{v.n > 1 ? "s" : ""}</td></tr>)}</tbody></table>
               </div>
             </>
           )}
@@ -146,8 +179,22 @@ export default function Dashboard() {
 
         <div>
           <h2>Borrow</h2>
-          <LoanCenter shop={shop} account={account} wallet={wallet} onChanged={reload} askAI={askAI} />
-          <QrCard address={account} minPayment={p.minPayment} />
+          <LoanCenter shop={shop} account={viewer} wallet={wallet} onChanged={reload} askAI={askAI} />
+          {shop.loans.length > 0 && (
+            <div className="card">
+              <b>Loan history</b>
+              <table style={{ marginTop: 6 }}><tbody>
+                {shop.loans.map((l) => (
+                  <tr key={l.id}>
+                    <td>#{l.id}</td><td>{rupiah(BigInt(l.principal))}</td>
+                    <td><span className="chip">{l.derived === "Repaid" ? "Lunas" : l.derived === "Active" ? "Berjalan" : l.derived === "Proposed" ? "Penawaran" : l.derived === "Expired" ? "Kedaluwarsa" : "Dihentikan"}</span></td>
+                    <td className="sub">{l.derived === "Active" || l.derived === "Repaid" ? `${rupiah(BigInt(l.repaid))} / ${rupiah(BigInt(l.total))}` : `total ${rupiah(BigInt(l.total))}`}</td>
+                  </tr>
+                ))}
+              </tbody></table>
+            </div>
+          )}
+          <QrCard address={viewer} minPayment={p.minPayment} onReceived={reload} />
         </div>
       </div>
 
@@ -165,9 +212,9 @@ export default function Dashboard() {
       </div>
 
       <h2 id="assistant">Assistant</h2>
-      <Chat account={account} wallet={wallet} inject={inject} onActivity={reload} />
+      <Chat account={viewer} wallet={wallet} inject={inject} onActivity={reload} />
 
-      <p className="sub" style={{ marginTop: 20 }}>Prefer chat on your phone? Use the same wallet in the <a href={TG_URL}>Telegram bot</a>. <a href={`/m/${account}`}>Share your public page</a> to show customers and lenders your verified track record.</p>
+      <p className="sub" style={{ marginTop: 20 }}>Prefer chat on your phone? Use the same wallet in the <a href={TG_URL}>Telegram bot</a>. <a href={`/m/${viewer}`}>Share your public page</a> to show customers and lenders your verified track record.</p>
     </>
   );
 }

@@ -1,9 +1,10 @@
-import { createPublicClient, createWalletClient, fallback, http, type Address, type Hex, keccak256, toHex, decodeEventLog } from "viem";
+import { createPublicClient, createWalletClient, fallback, http, parseEventLogs, type Address, type Hex, keccak256, toHex, decodeEventLog } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
 import { kv } from "./kv";
 import { warungAbi, erc20Abi, reputationAbi, LOAN_STATUS, type LoanStatus } from "./abi";
 import type { Config } from "./config";
+import { customerNumber, derivedStatus, recordPayer, type DerivedStatus } from "./derive";
 
 export const RP = 100n; // IDRX has 2 decimals: 1 rupiah = 100 units
 
@@ -50,7 +51,7 @@ export async function getLoan(c: Chain, id: bigint): Promise<Loan> {
   return { id, merchant: r[0], status: LOAN_STATUS[r[1]], repayBps: r[2], principal: r[3], total: r[4], repaid: r[5], proposedAt: r[6], acceptedAt: r[7], lastSaleAt: r[8], reasonHash: r[9] };
 }
 
-export type Sale = { payer: Address; amount: bigint; repaidCut: bigint; memo: string; epoch: bigint; block: bigint; tx: Hex };
+export type Sale = { payer: Address; amount: bigint; repaidCut: bigint; memo: string; epoch: bigint; block: bigint; tx: Hex; customerNo: number };
 
 /** Facts about a merchant, computed from chain state by code. The LLM only ever sees these, never makes them up. */
 export type Facts = {
@@ -77,35 +78,87 @@ export async function getFacts(c: Chain, merchant: Address): Promise<Facts> {
   };
 }
 
-// ── Sale history from logs (memos + payer concentration). Incremental scan, cached in KV so serverless calls stay cheap. ──
-const CACHE_KEY = "sales:v1";
+// ── Contract logs → sales, customer numbers, shop count. One incremental scan, cached in KV so serverless calls stay cheap. ──
+const CACHE_KEY = "sales:v2"; // v2 adds first-seen payer order (customer numbers) and the registered-shop list
 const KEEP_PER_MERCHANT = 500;
 const MAX_CHUNKS_PER_CALL = 30; // bounds work per invocation; a long gap is caught up over a few calls
-type StoredSale = Omit<Sale, "amount" | "repaidCut" | "epoch" | "block"> & { amount: string; repaidCut: string; epoch: string; block: string };
-type CacheFile = { scanned: string; sales: Record<string, StoredSale[]> };
+const MIN_SYNC_GAP_MS = 2_000; // protects the rate-limited log node when many clients poll
+type StoredSale = Omit<Sale, "amount" | "repaidCut" | "epoch" | "block" | "customerNo"> & { amount: string; repaidCut: string; epoch: string; block: string };
+type CacheFile = { scanned: string; sales: Record<string, StoredSale[]>; payers: Record<string, string[]>; shops: string[] };
+let memo: { at: number; cache: CacheFile } | null = null; // per-instance, so bursts of polling cost one RPC round
 
-export async function getSales(c: Chain, merchant: Address): Promise<Sale[]> {
-  const cache: CacheFile = (await kv.get<CacheFile>(CACHE_KEY)) ?? { scanned: (c.cfg.DEPLOY_BLOCK - 1n).toString(), sales: {} };
+/** Bring the cached log index up to the chain head (bounded work per call) and return it. */
+export async function syncLogs(c: Chain): Promise<CacheFile> {
+  if (memo && Date.now() - memo.at < MIN_SYNC_GAP_MS) return memo.cache;
+  const cache: CacheFile = (await kv.get<CacheFile>(CACHE_KEY)) ?? { scanned: (c.cfg.DEPLOY_BLOCK - 1n).toString(), sales: {}, payers: {}, shops: [] };
   const head = await c.logsClient.getBlockNumber();
   let from = BigInt(cache.scanned) + 1n;
   const STEP = 9_999n; // the log nodes that keep history allow 10k-block ranges
-  const saleEvent = warungAbi.find((x) => x.type === "event" && x.name === "Sale") as never;
   let dirty = false;
   for (let i = 0; from <= head && i < MAX_CHUNKS_PER_CALL; i++) {
     const to = from + STEP - 1n > head ? head : from + STEP - 1n;
-    const logs = await c.logsClient.getLogs({ address: c.warung, event: saleEvent, fromBlock: from, toBlock: to });
-    for (const l of logs as any[]) {
+    // no topic filter: ONE request returns every event of the contract in the range (sales, registrations, loans)
+    const raw = await c.logsClient.getLogs({ address: c.warung, fromBlock: from, toBlock: to });
+    for (const l of parseEventLogs({ abi: warungAbi, logs: raw }) as any[]) {
       const a = l.args;
-      const list = (cache.sales[a.merchant.toLowerCase()] ??= []);
-      list.push({ payer: a.payer, amount: a.amount.toString(), repaidCut: a.repaidCut.toString(), memo: a.memo, epoch: a.epoch.toString(), block: l.blockNumber.toString(), tx: l.transactionHash });
-      if (list.length > KEEP_PER_MERCHANT) list.shift();
+      if (l.eventName === "Sale") {
+        const m = a.merchant.toLowerCase();
+        const list = (cache.sales[m] ??= []);
+        list.push({ payer: a.payer, amount: a.amount.toString(), repaidCut: a.repaidCut.toString(), memo: a.memo, epoch: a.epoch.toString(), block: l.blockNumber.toString(), tx: l.transactionHash });
+        if (list.length > KEEP_PER_MERCHANT) list.shift();
+        recordPayer((cache.payers[m] ??= []), a.payer);
+      } else if (l.eventName === "MerchantRegistered") {
+        const m = a.merchant.toLowerCase();
+        if (!cache.shops.includes(m)) cache.shops.push(m);
+      }
     }
     cache.scanned = to.toString();
     from = to + 1n;
     dirty = true;
   }
   if (dirty) await kv.set(CACHE_KEY, cache);
-  return (cache.sales[merchant.toLowerCase()] ?? []).map((s) => ({ ...s, amount: BigInt(s.amount), repaidCut: BigInt(s.repaidCut), epoch: BigInt(s.epoch), block: BigInt(s.block) }));
+  memo = { at: Date.now(), cache };
+  return cache;
+}
+
+export async function getSales(c: Chain, merchant: Address): Promise<Sale[]> {
+  const cache = await syncLogs(c);
+  const m = merchant.toLowerCase();
+  return (cache.sales[m] ?? []).map((s) => ({ ...s, amount: BigInt(s.amount), repaidCut: BigInt(s.repaidCut), epoch: BigInt(s.epoch), block: BigInt(s.block), customerNo: customerNumber(cache.payers[m], s.payer) }));
+}
+
+/** Sales of one shop mined after `afterBlock`, plus the block the index has scanned to (the client's next cursor). */
+export async function getSalesAfter(c: Chain, merchant: Address, afterBlock: bigint) {
+  const cache = await syncLogs(c);
+  const sales = (await getSales(c, merchant)).filter((s) => s.block > afterBlock);
+  return { head: BigInt(cache.scanned), sales };
+}
+
+export type LoanRow = Loan & { derived: DerivedStatus; fee: bigint };
+
+/** Every loan a shop ever had, newest first. The contract keeps loans by id, so this batches them in one multicall. */
+export async function getLoanHistory(c: Chain, merchant: Address): Promise<LoanRow[]> {
+  const [next, params] = await Promise.all([c.read("nextLoanId") as Promise<bigint>, getParams(c)]);
+  const ids = Array.from({ length: Math.min(Number(next) - 1, 300) }, (_, i) => BigInt(i + 1));
+  if (!ids.length) return [];
+  const rows = (await c.publicClient.multicall({ allowFailure: false, contracts: ids.map((id) => ({ address: c.warung, abi: warungAbi, functionName: "loans", args: [id] })) as any })) as any[];
+  const now = Math.floor(Date.now() / 1000);
+  return rows
+    .map((r, i): LoanRow => {
+      const loan: Loan = { id: ids[i], merchant: r[0], status: LOAN_STATUS[r[1]], repayBps: r[2], principal: r[3], total: r[4], repaid: r[5], proposedAt: r[6], acceptedAt: r[7], lastSaleAt: r[8], reasonHash: r[9] };
+      return { ...loan, derived: derivedStatus(loan.status, loan.proposedAt, params.proposalTtl, now), fee: loan.total - loan.principal };
+    })
+    .filter((l) => l.merchant.toLowerCase() === merchant.toLowerCase())
+    .reverse();
+}
+
+/** Network-wide numbers for the developer overview. */
+export async function getStats(c: Chain) {
+  const [cache, next] = await Promise.all([syncLogs(c), c.read("nextLoanId") as Promise<bigint>]);
+  const ids = Array.from({ length: Math.min(Number(next) - 1, 300) }, (_, i) => BigInt(i + 1));
+  const rows = ids.length ? ((await c.publicClient.multicall({ allowFailure: false, contracts: ids.map((id) => ({ address: c.warung, abi: warungAbi, functionName: "loans", args: [id] })) as any })) as any[]) : [];
+  const count = (st: LoanStatus) => rows.filter((r) => LOAN_STATUS[r[1]] === st).length;
+  return { shops: cache.shops.length, loansProposed: ids.length, loansActive: count("Active"), loansRepaid: count("Repaid"), loansDefaulted: count("Defaulted") };
 }
 
 /** Share of counted-window revenue coming from the single biggest payer (0..1). Used as a deterministic fraud signal. */

@@ -4,11 +4,19 @@ import { useSearchParams } from "next/navigation";
 import type { Address } from "viem";
 import { gaslessPay, gaslessFaucet, RelayUnavailable } from "@/lib/gasless";
 import { demoWallet } from "@/lib/demo";
+import { hasWalletConnect } from "@/lib/wallet";
 import { IDRX, WARUNG, erc20Abi, warungAbi, warungRead, publicClient, useWallet, write, errText, rupiah, short, txLink } from "@/lib/web3";
 
 function Pay({ merchant }: { merchant: Address }) {
   const q = useSearchParams();
-  const amountRp = Number(q.get("amount") ?? 0);
+  // a QR without an amount is the general shop QR (e.g. on the stall poster): the customer types the amount
+  const urlAmount = Math.floor(Number(q.get("amount") ?? 0)) || 0;
+  const [typed, setTyped] = useState("");
+  const typedRp = Math.floor(Number(typed) || 0);
+  const amountRp = urlAmount || typedRp;
+  const MIN_RP = 5000; // the contract rejects smaller payments (dust)
+  const tooSmall = amountRp > 0 && amountRp < MIN_RP;
+  const payable = amountRp >= MIN_RP;
   const note = q.get("note") ?? "";
   const { account, wallet, connect, error } = useWallet();
   const [m, setM] = useState<any>(null);
@@ -20,7 +28,7 @@ function Pay({ merchant }: { merchant: Address }) {
   const units = BigInt(Math.floor(amountRp)) * 100n;
 
   useEffect(() => { warungRead("merchants", [merchant]).then(setM).catch(() => {}); }, [merchant]);
-  useEffect(() => { setNoWallet(!window.ethereum); }, []);
+  useEffect(() => { setNoWallet(!window.ethereum && !hasWalletConnect); }, []);
   useEffect(() => { if (account) publicClient.readContract({ address: IDRX, abi: erc20Abi, functionName: "balanceOf", args: [account] }).then(setBal); }, [account, tx, busy]);
 
   async function pay() {
@@ -88,8 +96,17 @@ function Pay({ merchant }: { merchant: Address }) {
       </div>
 
       <div className="card">
-        {!amountRp && <p className="bad">Missing amount in the link.</p>}
-        <button onClick={payDemo} disabled={!!busy || !amountRp}>Pay with demo wallet (no wallet needed)</button>
+        {!urlAmount && (
+          <>
+            <label style={{ marginTop: 0 }}>How much do you want to pay? (Rp)</label>
+            <input value={typed} onChange={(e) => setTyped(e.target.value)} inputMode="numeric" placeholder="e.g. 25000" aria-label="Amount in rupiah" />
+            <div className="row" style={{ margin: "6px 0 12px" }}>
+              {[10000, 25000, 50000, 100000].map((v) => <button key={v} className="ghost chip-btn" onClick={() => setTyped(String(v))}>{rupiah(BigInt(v) * 100n)}</button>)}
+            </div>
+          </>
+        )}
+        {tooSmall && <p className="bad">Minimum payment is {rupiah(BigInt(MIN_RP) * 100n)}.</p>}
+        <button onClick={payDemo} disabled={!!busy || !payable}>Pay with demo wallet (no wallet needed)</button>
         <p className="sub" style={{ margin: "8px 0 0" }}>Creates a throwaway test wallet in this browser, funds it with free test IDRX and pays gaslessly. Testnet only.</p>
 
         <hr style={{ border: 0, borderTop: "1px solid var(--line)", margin: "16px 0" }} />
@@ -108,7 +125,7 @@ function Pay({ merchant }: { merchant: Address }) {
         ) : (
           <>
             <p className="sub">Your balance: {bal === null ? "…" : rupiah(bal)} test IDRX {short_ && <button className="ghost" onClick={faucet} disabled={!!busy}>Get test IDRX</button>}</p>
-            <button onClick={pay} disabled={!!busy || !amountRp || short_}>Pay {amountRp ? rupiah(units) : ""} from my wallet</button>
+            <button onClick={pay} disabled={!!busy || !payable || short_}>Pay {amountRp ? rupiah(units) : ""} from my wallet</button>
           </>
         )}
         {busy && <p className="sub">{busy}</p>}

@@ -1,6 +1,6 @@
 # 🏪 Kulaya
 
-**Modal usaha, langsung dari hasil jualanmu.** Fair credit for Indonesia's 64 million small shops. The AI proposes, the smart contract decides.
+**Modal usaha, dari hasil jualan sendiri.** Fair credit for Indonesia's 64 million small shops. The AI proposes, the smart contract decides.
 
 *Kulaya* is a coined name, from *kulakan* (buying stock to sell), the very thing small sellers borrow for.
 

@@ -40,3 +40,11 @@ test("someone else's signature, or a nonce issued to another address, is refused
   const sig2 = await attacker.signMessage({ message: c2.message });
   assert.equal(await completeChallenge(victim.address, c2.nonce, sig2, SECRET), null, "nonce belongs to a different address");
 });
+
+test("the login method is recorded in the token without changing verification", async () => {
+  const t = signToken(ADDR, SECRET, Date.now(), "telegram");
+  assert.equal(verifyToken(t, SECRET), ADDR);
+  const claim = JSON.parse(Buffer.from(t.split(".")[0], "base64url").toString());
+  assert.equal(claim.m, "telegram");
+  assert.equal(JSON.parse(Buffer.from(signToken(ADDR, SECRET).split(".")[0], "base64url").toString()).m, "wallet");
+});

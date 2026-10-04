@@ -19,7 +19,9 @@ Browser  ──────────▶ /api/{agent,sales,relay,link,redteam}
 |---|---|
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `SESSION_SECRET`, `UNDERWRITER_PRIVATE_KEY`, `RELAYER_PRIVATE_KEY` | secrets. Webhook secret: any 16+ char random string; session secret: 32+ chars (`openssl rand -hex 32`), signs dashboard sign-in tokens |
 | `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY` | AI providers, set **at least one** (all free tiers). Tried in that order with automatic failover; Groq also gives free voice-note transcription. Optional `LLM_CHAIN` overrides the order |
-| `NEXT_PUBLIC_TELEGRAM_BOT` | bot username without `@` (used for every Telegram link in the UI) |
+| `NEXT_PUBLIC_TELEGRAM_BOT` | bot username without `@` (used for every Telegram link in the UI). **A username only, never the token** (`NEXT_PUBLIC_` values reach every browser) |
+| `NEXT_PUBLIC_WC_PROJECT_ID` | optional: free WalletConnect/Reown project id; enables the wallet picker for phones without a wallet browser |
+| `NEXT_PUBLIC_SITE_URL` | optional: canonical site URL for social-preview metadata (defaults to `https://kulaya.vercel.app`) |
 | `RPC_URL` | comma-separated failover list (see `app/.env.example`) |
 | `WARUNG_ADDRESS`, `IDRX_ADDRESS`, `REPUTATION_ADAPTER`, `ERC8004_REPUTATION_REGISTRY`, `AGENT_ID`, `DEPLOY_BLOCK`, `CHAIN_ID` | from the README / deploy output |
 | `REDTEAM_MERCHANT`, `REDTEAM_RATE_LIMIT` | demo shop for `/redteam`; attempts per IP per hour |
@@ -36,7 +38,11 @@ curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
   --data-urlencode 'allowed_updates=["message"]'
 ```
 
-6. **Warm the sale-history cache** (one-time backfill; the API then only scans a few recent blocks per request): `cd app && npm run warm`. This needs the Redis variables locally (`npx vercel env pull`).
+6. **Warm the log index** (sales, customer numbers, shop list; key `sales:v2`) (one-time backfill; the API then only scans a few recent blocks per request): `cd app && npm run warm`. This needs the Redis variables locally (`npx vercel env pull`).
+
+## Feature scripts (from `app/`)
+
+`npm run features` runs 31 live API checks against production; `npm run e2e:ui`, `e2e:owner`, `e2e:pay` drive real-browser journeys with a scripted wallet; `npm run login-code -- 0xWallet` prints a Telegram-login code for testing. A first `deploy --prod` after a change sometimes reports `status: error` without a build error; rerunning it succeeds.
 
 ## Operating notes
 

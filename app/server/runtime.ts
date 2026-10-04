@@ -3,6 +3,7 @@ import { makeChain } from "./chain";
 import { makeLLM } from "./llm";
 import { makeRelayer } from "./relay";
 import { limited } from "./kv";
+import { verifyToken } from "./session";
 
 /** Built once per serverless instance and reused while it stays warm. */
 let rt: ReturnType<typeof build> | null = null;
@@ -34,3 +35,9 @@ export function errorResponse(e: unknown): Response {
 }
 
 export { limited };
+
+/** Wallet address behind a valid "Authorization: Bearer <session token>" header, or null. */
+export function authAddress(req: Request): string | null {
+  const secret = getRuntime().cfg.SESSION_SECRET;
+  return secret ? verifyToken(req.headers.get("authorization")?.replace(/^Bearer /i, ""), secret) : null;
+}

@@ -1,0 +1,182 @@
+# Kulaya: handoff for the next session (UI implementation)
+
+Written 2026-10-04. **Hackathon submission deadline: Oct 7, 2026** (extended, confirmed). Demo Day Oct 31, Yogyakarta.
+Read this file first. Then `docs/design/DESIGN_REVIEW.md` (what the designer delivered and what is wrong with it) and `docs/design/kulaya-design-brief.md` (the original brief).
+
+> **Kickoff prompt to paste into the new conversation** is at the very bottom (section 12).
+
+---
+
+## 1. State of the project in one screen
+
+| Area | State |
+|---|---|
+| Contracts (BSC testnet) | Deployed, 33 Foundry tests pass. Not changing. |
+| AI agent + safety layers | Live: Groq > Cerebras > Mistral > OpenRouter > Gemini failover, policy layer, reply guard, plain-text output. 32 TypeScript tests pass. |
+| Backend / API | Live on Vercel (`https://kulaya.vercel.app`), Redis state, Telegram webhook. **All confirmed features built** (section 4). |
+| Telegram bot | `@KulayaBot`: chat, voice, QR, loan offers, `/start /status /link /masuk`. |
+| Web UI | **Old, temporary UI** (works, ugly). Being replaced by the new design. |
+| New design | Delivered in `app/assets/` and **verified** (`DESIGN_REVIEW.md`). **Not implemented yet. That is the job of the next session.** |
+| Submission pieces | Pitch deck, ≤5 min demo video + script, submission form text: **not started** (the product owner wants these last). |
+
+**Live URLs:** app `https://kulaya.vercel.app` · repo `https://github.com/ketutezraugm/kulaya` · bot `https://t.me/KulayaBot`.
+**Test wallets' balances (testnet):** relayer 0.039 tBNB (pays users' gas; refuses below 0.002) · AI wallet 0.007 · deployer 0.16.
+
+## 2. Repo map
+
+```
+contracts/            Foundry. Warung.sol (core), ReputationAdapter.sol, MockIDRX.sol. redeploy.sh does everything.
+app/                  ONE Next.js 16 project on Vercel (UI + API + Telegram webhook)
+  app/                  routes (pages) and app/api/* (serverless handlers)
+  components/           Chat, LoanCenter, QrCard (old UI parts; to be replaced)
+  lib/                  client helpers: web3 (wallet hook), wallet (WalletConnect), auth (sessions), gasless, shop (data hook), brand, demo
+  server/               backend logic: agent, llm (provider chain), policy, chain (RPC + log index), relay, session, store, kv, profile, derive, format, telegram, keeper, ...
+  scripts/              seed.mts, e2e.mts, gasless.mts, features-e2e.mts, warm-cache.mts, login-code.mts, check.mts
+  e2e/                  Playwright journeys (ui-features, demo-pay, owner-journey) + screenshots in e2e/.shots (git-ignored)
+  public/               manifest.webmanifest, icons/, og.png  (generated from the designer's SVGs)
+  assets/               THE DESIGN HANDOFF (art/, handoff/, *.dc.html frames, screenshots/ (local only))
+docs/                   design brief + review, this file, brand/ (Telegram avatars)
+```
+
+## 3. Commands (run from `app/` unless noted)
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Local app on :3000 (API under `/api`; Redis falls back to memory) |
+| `npm test` | 32 unit tests (policy, session, format, profile, derive, Telegram login codes) |
+| `npx tsc --noEmit` | Typecheck. **If it shows impossible errors, delete `tsconfig.tsbuildinfo` first** (stale incremental cache bit us once) |
+| `npx next build` | Production build |
+| `npm run features` | **31 live API checks** against production (profile, sign-in, Telegram login, live payments, customer numbers, loan history, bot commands) |
+| `npm run e2e:ui` | 13 real-browser checks (general QR, live "Pembayaran diterima!", Telegram session, shop name) |
+| `npm run e2e:owner` | Full owner journey in a browser: register, receive payments, AI chat, loan offer, accept |
+| `npm run e2e:pay` | Customer pays via the demo wallet |
+| `npm run seed -- day [0xShop]` | Record one day of demo sales for the demo shop, or any registered shop |
+| `npm run warm` | Rebuild the contract-log index in Redis (needed after a contract redeploy or index-format change) |
+| `npm run login-code -- 0xWallet` | Print a Telegram-login code for a wallet (testing `/masuk?t=...`) |
+| `npx vercel@latest deploy --prod --yes` | Deploy. **The first attempt after a change often reports `"status": "error"` with no build error; just rerun it** (it has succeeded on the retry every time) |
+| `cd ../contracts && forge test` | 33 contract tests |
+
+`APP_BASE=http://localhost:3000 npm run features` runs the same checks against a local server.
+All three Playwright scripts use a **scripted wallet** (they imitate MetaMask), so they work with any UI as long as the visible button texts match (see 9.3 for how to keep them working after the redesign).
+
+## 4. Features built this session (backend is final, UI is temporary)
+
+| Feature | Where | API / behavior |
+|---|---|---|
+| **Shop name + nickname** | `server/profile.ts`, `/api/profile` | `GET ?merchant=` public name only (owner's own session also gets `nickname`). `POST {name, nickname?}` needs a session. Name 2-40 chars, nickname 1-20; letters/digits/space and `. , ' & ( ) / -` only; links, handles, markup, control and bidi characters are rejected. The AI greets by nickname (`owner_nickname` in its facts); `/start` greets by it too. |
+| **Sign in with Telegram** | `store.newLoginCode/consumeLoginCode`, `/api/auth/telegram`, `/masuk` page, bot `/masuk` | Bot (linked chats only) sends a button to `/masuk?t=<32 hex>`. Single use, 10 min, exchanged by **POST** (link previews cannot burn it). Gives a 12 h session with `method: "telegram"`: read + chat + profile. **Money actions still need a wallet signature.** |
+| **Wallet picker** | `lib/wallet.ts`, `useWallet()` | Injected wallet if present, else **WalletConnect** (lazy-loaded). **Needs `NEXT_PUBLIC_WC_PROJECT_ID`** (free, https://cloud.reown.com). Smoke-tested locally with a dummy id (modal opens, no errors); **a real connection is untested.** `connect()` ignores click events; pass `"injected"`/`"walletconnect"` to force. |
+| **Live "Pembayaran diterima!"** | `/api/payments`, `QrCard` | `GET ?merchant=` returns `{head}`; `?merchant=&after=<head>` returns new sales. Uncached, rate-limited. Detected 0.4 s after the relayer confirmed it in tests. Fixed-amount QR waits for that exact amount; general QR for any payment. |
+| **Loan history** | `/api/loans`, `getLoanHistory` | Every loan of a shop, newest first, with `derived` status incl. **`Expired`** (stale offers). |
+| **General shop QR** | `/pay/[merchant]` without `amount` | The page asks the customer for the amount (min Rp 5.000). `QrCard` has a "Customer enters amount" mode. |
+| **Friendly customer numbers** | `server/derive.ts`, log index `sales:v2` | `customerNo` per shop in first-seen order, stable. Sales rows and the live feed carry it ("Pelanggan #12"). |
+| **Network stats** | `/api/agent` `stats` | `{shops, loansProposed, loansActive, loansRepaid, loansDefaulted}` for the protocol overview. |
+| **PWA / social** | `public/manifest.webmanifest`, `icons/`, `og.png`, `app/layout.tsx` metadata | Manifest (start `/dashboard?source=pwa`; **update `start_url` when the new `/toko` route exists**), 192/512/maskable icons, apple-touch-icon, SVG+PNG favicon, OG/Twitter image. No service worker (not required to install on modern Chrome). |
+| **Customer numbers in UI, shop name in header, loan history card, Telegram-session viewing** | `app/dashboard/page.tsx`, `lib/shop.ts`, `lib/auth.ts` | Temporary wiring so every feature is testable. The viewer is `connected wallet ?? session address`. |
+
+**Data / auth model to keep in the new UI**
+- Session = HMAC token in `sessionStorage` key `kulaya_session` `{address, token, method}` (`lib/auth.ts`). Wallet sign-in = one free signature (`/api/auth` challenge + verify). The token authorizes: chat (`/api/chat`), profile save. It never authorizes money.
+- Reads (shop stats) come straight from the chain via `lib/shop.ts` `useShop(address)` (2 multicalls + `/api/sales` + `/api/loans` + `/api/profile`), refreshed every 20 s.
+- Gasless actions: `lib/gasless.ts` (`gaslessRegister`, `gaslessPay`, `gaslessAccept`, `gaslessFaucet`), with a `RelayUnavailable` fallback to a normal wallet transaction.
+- `lib/demo.ts`: browser-local throwaway wallet for the "dompet demo" button.
+- Rupiah formatting: `rupiah()` in `lib/web3.ts` (units are 2-decimal IDRX: 100 units = Rp 1).
+
+## 5. Contract parameters (use these in copy and examples)
+
+Limit = 10% of verified 30-day sales, capped by level ceiling: **Perintis Rp 1.000.000, Berkembang 2.000.000, Maju 4.000.000, Unggul 8.000.000** (doubles after each fully repaid loan). Min loan Rp 50.000 · ≥ 5 distinct customers · max counted per customer per day Rp 250.000 · min payment Rp 5.000 · fee ≤ 5% flat (AI offers ~4%) · repayment ≤ 20% of each sale (AI offers ~10%) · offer valid 24 h · written off after 14 days with no sales · pool: loan ≤ 5% of pool, new loans/day ≤ 20%, 20% of fees to first-loss reserve.
+
+## 6. The design implementation job
+
+### 6.1 Principle
+Rebuild the **frontend only**. Backend, API, contracts and tests stay. Keep behavior; replace look, structure and copy. After each screen, re-run `npm run e2e:ui` / `e2e:owner` (adapt selectors, see 9.3).
+
+### 6.2 Import pipeline (do this first)
+1. **Tokens:** replace `app/globals.css` with `assets/handoff/kulaya-tokens.css` + a small reset + component classes. Owner site is the default; `[data-site="protocol"]` (and `data-theme="dark"`) on the protocol layout.
+2. **Fonts** via `next/font/google`: Bree Serif 400; Plus Jakarta Sans 400/500/600/700/800; JetBrains Mono 400/600 **only on protocol routes**. Expose as `--k-font-display/body/mono`.
+3. **Art:** write `scripts/build-art.mjs` (SVGR, with the options below) that reads `assets/art/**/*.svg` and generates `components/art/*.tsx`.
+   - **Strip** `<metadata>…</metadata>` and `xmlns:c2pa` (80% of the bytes).
+   - **Inline as components.** Never `<img src>` for SVGs that contain `<text>` (list in DESIGN_REVIEW 6.2), or fonts fall back to Georgia. Simplest: inline all of them.
+   - Keep `currentColor` on icons (they stroke with it and fill with kunyit).
+   - One `<Icon name="terima-bayar" />` map for the 43 icons; one `<Art name=... />` for scenes; named exports for the mascot poses and level stalls.
+4. **Copy:** import `assets/handoff/copy-id.json` as typed constants (`lib/copy.ts`), fill `{curly}` placeholders in code. Add the new keys in DESIGN_REVIEW 6.4.
+5. **Fix the asset defects** (DESIGN_REVIEW findings 2, 3, 9) while converting, or ask Claude Design to; they are 1-line edits.
+
+### 6.3 Route map (new → source frames → what exists today)
+
+| New route | Frames | Today | Notes |
+|---|---|---|---|
+| `/` landing (owner) | 1a, 5i | `/` | CTA "Mulai sekarang, gratis" and "Masuk" |
+| `/mulai` tutorial + setup | 1b-1f, 2a-2l | `/onboard` (+dashboard register) | Wallet steps use prep screens (2c, 2f). **Sign-in signature can be the "Konfirmasi" in 2c**, so profile save needs no extra popup. Name step (2e) → `POST /api/profile`. WalletConnect picker = sheet 2i |
+| `/masuk` | 2m, 2n, 2o | `/masuk` (code exchange only) | With `?t=` exchange the code; without it show the choice screen. See finding 12 |
+| `/toko` home | 3a, 3b, 5h | `/dashboard` | Six capital states from `shop` data (+ `loans[0].derived`) |
+| `/toko/terima` | 3c-3g | `QrCard` | Live banner = 3g; fullscreen 3f uses Fullscreen + Wake Lock APIs |
+| `/toko/modal` | 3h-3m | `LoanCenter` | Offer terms read from the contract; `/api/loans` for history |
+| `/toko/riwayat` | 4a, 4b | dashboard tables | 30-day bars per IMPLEMENTATION.md; customer = "Pelanggan #n" |
+| `/toko/tanya` | 4c-4f | `Chat` | Same `/api/chat`; QR card and offer card are `paymentLinks` / `loan` in the reply |
+| `/bantuan` | 4g, 4h | none | FAQ + glossary from copy deck; replay tutorial |
+| `/bayar/[toko]` | 5a-5f | `/pay/[merchant]` | **Keep `?amount=&note=`**; no amount = general QR (5b) |
+| `/t/[toko]` | 5g | `/m/[merchant]` | Public: name from `/api/profile`, level, 30-day chart, "N modal lunas" from `/api/loans` |
+| `/modal/[id]` | (offer link) | `/loan/[id]` | The AI's "Lihat & setujui" link target |
+| `/toko/poster` (new) | QR Poster A5/A6 | none | Print page at true size; page 2 is the black-and-white version; QR = `/bayar/[toko]` |
+| `/protocol` + `/protocol/{redteam,agent,pool,contracts,gasless,docs}` | 6a-7j | `/` (judge parts), `/redteam`, `/agent`, `/pool` | English. Live numbers from `/api/agent`. Red-team: convert raw units to rupiah (finding 10). Pool uses the wallet hook |
+
+**Bake in redirects** (`next.config.mjs` `redirects()`, permanent): `/pay/:m → /bayar/:m`, `/loan/:id → /modal/:id`, `/m/:m → /t/:m`, `/dashboard → /toko`, `/onboard → /mulai`, `/redteam → /protocol/redteam`, `/agent → /protocol/agent`, `/pool → /protocol/pool`.
+**Then update every place that builds links:** `server/agent.ts` (payment link `/pay/…`, loan link `/loan/…`), `server/telegram.ts` (`/onboard?code=`, `/masuk?t=`), `components/QrCard.tsx`, `public/manifest.webmanifest` (`start_url` → `/toko`), README, DEPLOY.md. QR codes already shared point to `/pay/…`, which is why the redirects matter.
+
+### 6.4 Suggested order (so a demo-able product exists at each stop)
+1. Tokens + fonts + brand + art pipeline + two layouts (owner shell with test banner and tab bar; protocol shell with sidebar).
+2. Owner: landing → `/mulai` → `/toko` → `/toko/terima` → `/toko/modal` → `/bayar/[toko]`. These are the demo path.
+3. Owner: `/toko/tanya`, `/toko/riwayat`, `/bantuan`, `/t/[toko]`, `/masuk`, poster.
+4. Protocol: overview, red-team, agent, pool, contracts, gasless, docs.
+5. Redirects, link updates, manifest, 404/error/offline states, install prompt (4n).
+6. QA pass (section 9), then deploy, then record the video on the new UI.
+
+### 6.5 Acceptance (from the brief, §13)
+Bu Sri can alone: show a payment QR, understand her limit and why, accept an offer knowing exactly what she repays. 360 px wide and 130% text size work. **No jargon on the owner site** (copy deck already complies). A judge understands Kulaya in 60 s on `/protocol` and verifies on BscScan in two clicks. No emoji, no stock art, one obvious action per owner screen.
+
+## 7. Known issues and decisions waiting for the product owner
+
+1. **Mascot:** the jar's flat lid can read as a peci and there is no apron (the brief said apron, no peci). Accept or ask for a redraw?
+2. **WalletConnect project id:** create a free project at https://cloud.reown.com and give the id (put it in `app/.env.local` and Vercel as `NEXT_PUBLIC_WC_PROJECT_ID`). Until then phones without a wallet browser still need MetaMask/Trust deep links.
+3. **Telegram avatar:** upload `docs/brand/telegram-avatar-kulaya-512.png` (or the mascot version) with BotFather `/setuserpic` (the API cannot set it).
+4. **Real MetaMask test** of: pay, accept loan, pool deposit, `/onboard` linking. All automated tests use a scripted wallet.
+5. **Voice notes** (Groq Whisper) have never been tested with a real voice message.
+6. **Frame 2n** (login link sent) needs a decision (finding 12).
+7. **Demo shop top-up:** `npm run seed -- day` once per UTC day keeps its 30-day window fresh until Demo Day.
+
+## 8. Operations notes
+
+- **Secrets:** only in `app/.env.local` (git-ignored) and Vercel (Sensitive). Never print or commit them. Names: `GROQ_API_KEY, CEREBRAS_API_KEY, GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, SESSION_SECRET, UNDERWRITER_PRIVATE_KEY, RELAYER_PRIVATE_KEY, KV_REST_API_*`. `NEXT_PUBLIC_*` variables are shipped to browsers: **never put a token in one** (this happened once, caught before deploy).
+- **Vercel project** is `kulaya` (renamed from warung-agent); domains `kulaya.vercel.app` and the old `warung-agent.vercel.app` (alias to the same deployment).
+- **Redis index key `sales:v2`** (customer numbers, shops). If the contract is redeployed or the index format changes: `npm run warm`.
+- **RPCs:** official BNB nodes reject `eth_getLogs`; PublicNode prunes old logs; `LOGS_RPC_URL` defaults to OnFinality (10k-block ranges). Reads use a failover list.
+- **LLM free tiers rate-limit.** The red-team page also has a "compromised model" mode that never calls an LLM.
+
+## 9. Gotchas and lessons (save yourself the time)
+
+1. **Shell quoting:** very long heredoc commands in the tool's bash sometimes fail with `unexpected EOF`. Write scripts to files with the Write tool and run them.
+2. **Python string escapes:** when generating TS/JS through Python, a `\n` inside a normal string becomes a real newline and breaks the file (this happened 4 times). Use raw strings (`r'''…'''`) or the Edit tool.
+3. **Stale `tsconfig.tsbuildinfo`** can show phantom type errors; delete it.
+4. **Deploy flake:** see the table in section 3.
+5. **Selectors in Playwright tests** are visible texts like "Connect your shop wallet", "Register my shop", "Pay with demo wallet", "Customer enters amount", "Pembayaran diterima!", "Name your shop". After the redesign, update them to the Bahasa labels or add stable `data-testid`s (preferred: add `data-testid` in the new components and switch the scripts to them).
+6. **React/Next specifics:** Next 16 App Router; route files may only export handlers/config (a `linkMessage` export once broke a build); use `after()` for post-response work.
+7. **Windows paths** in Node ESM imports need `file://` URLs; use relative imports inside the repo.
+
+## 10. Submission checklist (last)
+
+- [ ] Redesign shipped and re-tested (section 6 + 9).
+- [ ] Pitch deck (8 slides incl. QRIS-bridge roadmap and regulatory path), demo video ≤ 5 min on the new UI (script: voice note → gasless QR payment → AI offer → accept → auto-repay → reputation ticks up → live jailbreak reverts on-chain), submission text (team, tracks, contract `0xF6fD0727D20eD76442BfD16727fA4ce1482321D8`, repo, video, problem/solution/detail with mermaid).
+- [ ] README: replace `<VIDEO_URL>`; add a screenshot or two of the new UI.
+- [ ] Keep honest: testnet only, mock IDRX, QR is not QRIS, no real UMKM pilot, needs a licensed lender of record.
+
+## 11. Useful facts
+
+Contracts: Warung `0xF6fD0727D20eD76442BfD16727fA4ce1482321D8` · MockIDRX `0x6CD5aDaA626A96F88a3577aEa22c540Cdc99e527` · ReputationAdapter `0x41dA930a8712A2799F3B87d7E6A29f6195C5214E` · ERC-8004 agent #2535 (wallet `0xA13B769d9b9777d49f73491379007dc4C2A1dc78`) · relayer `0x15c3e5B24aA0E3bCf6693a7f2C20052ec60A828c` · demo shop "Warung Bu Sri" `0x7FeaeE8CFcC8D0E79329A864Fcf9758F4DDd98C6` (the EIP-712 domain name is still "Warung", so wallets show "Warung" when signing; the copy deck already tells users this is Kulaya's system name).
+
+## 12. Kickoff prompt (paste this into the new conversation)
+
+> We are continuing the Kulaya hackathon project (submission deadline Oct 7, 2026). Read `docs/NEXT_SESSION.md` first, then `docs/design/DESIGN_REVIEW.md` and skim `docs/design/kulaya-design-brief.md`. The new design is in `app/assets/` (frames, `art/` SVGs, `handoff/kulaya-tokens.css`, `handoff/copy-id.json`, `handoff/IMPLEMENTATION.md`).
+>
+> Your job now: **implement the new design** as described in section 6 of NEXT_SESSION.md: owner site in Bahasa (phone first) and the English judge/developer site under `/protocol`, with old URLs redirecting. Backend and APIs are done; do not change contracts. Work in the order in 6.4, committing and deploying after each stage (`npx vercel@latest deploy --prod --yes`; rerun if the first attempt shows status error). After each stage run `npx tsc --noEmit`, `npm test`, `npm run features`, and the Playwright journeys (`npm run e2e:ui`, `e2e:owner`, `e2e:pay`), updating the selectors or adding `data-testid`s.
+>
+> Fix the asset defects listed in DESIGN_REVIEW.md as you import the art. Inline every SVG that contains `<text>`; strip the C2PA metadata; use Plus Jakarta Sans with tabular-nums for columns of money. Ask me about the open decisions in section 7 only when you reach them (mascot lid/apron, WalletConnect project id). Never print or commit secrets. Keep claims honest (testnet only, QR is not QRIS).

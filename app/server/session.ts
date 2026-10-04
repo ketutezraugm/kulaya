@@ -18,8 +18,11 @@ export async function newChallenge(address: string) {
   return { nonce, message: challengeMessage(address, nonce) };
 }
 
-export function signToken(address: string, secret: string, now = Date.now()): string {
-  const payload = b64(Buffer.from(JSON.stringify({ a: address.toLowerCase(), exp: Math.floor(now / 1000) + TTL_SEC })));
+export type LoginMethod = "wallet" | "telegram";
+
+/** `method` is recorded for auditing and future restrictions (e.g. money actions could demand a wallet login). */
+export function signToken(address: string, secret: string, now = Date.now(), method: LoginMethod = "wallet"): string {
+  const payload = b64(Buffer.from(JSON.stringify({ a: address.toLowerCase(), exp: Math.floor(now / 1000) + TTL_SEC, m: method })));
   return `${payload}.${b64(createHmac("sha256", secret).update(payload).digest())}`;
 }
 

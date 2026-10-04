@@ -1,5 +1,6 @@
 import { BusyError, type LLM, type Msg, type ToolDecl } from "./llm";
 import { plainText } from "./format";
+import { getProfile } from "./profile";
 import { BaseError, ContractFunctionRevertedError, decodeEventLog, type Address } from "viem";
 import { getFacts, getLoan, getSales, topPayerShare, gasPrice, warungAbi, RP, reasonHash, type Chain, type Facts } from "./chain";
 import { validateProposal } from "./policy";
@@ -10,6 +11,7 @@ export const SYSTEM = `You are Kulaya, a bookkeeping and micro-credit assistant 
 Reply in the user's language (default Bahasa Indonesia). Be short, warm and plain: no jargon. Write PLAIN TEXT only: the chat does not render Markdown, so never use ** or __ for bold, # headings, backticks or tables. Short lines are fine; for a list put "-" at the start of each line.
 
 HARD RULES
+- If owner_nickname is present in get_business_summary, address the owner by it (for example "Bu Sri") in greetings; otherwise use "Bapak/Ibu".
 - Shop data changes constantly (payments arrive, limits move). Figures mentioned earlier in this chat are OUTDATED. In every turn where the user asks about sales, credit limit, loan eligibility or a loan, call get_business_summary (and get_loan_status for loans) FIRST and answer only from those fresh results. Never reuse an earlier answer.
 - Never invent numbers and never do arithmetic. Every figure you tell the user must appear verbatim in a tool result in this conversation (tool results include fee and total-owed amounts; quote those). A guard rejects replies containing any other figure.
 - You cannot move money or change any limit. You can only PROPOSE a loan with propose_loan. A smart contract enforces every limit, and the owner must accept the loan in their own wallet.
@@ -68,7 +70,9 @@ async function summary(ctx: AgentCtx, f: Facts) {
   if (ctx.injectedMemo) memos.push(ctx.injectedMemo.slice(0, 140));
   const active = f.dailyRevenue.filter((d) => d.counted > 0n);
   const ceiling = [f.creditLimit, f.exposureCap, f.poolIdle].reduce((a, b) => (b < a ? b : a));
+  const profile = await getProfile(ctx.merchant);
   return {
+    shop_name: profile?.name ?? null, owner_nickname: profile?.nickname || null,
     registered: f.registered, distinct_payers: f.payers, tier: f.tier, active_days: f.activeDays,
     trailing_revenue_rupiah: rp(f.trailingRevenue), credit_limit_rupiah: rp(f.creditLimit), loan_ceiling_rupiah: rp(ceiling),
     avg_daily_revenue_rupiah: active.length ? rp(f.trailingRevenue) / active.length : 0,

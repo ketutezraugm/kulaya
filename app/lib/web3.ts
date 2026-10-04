@@ -62,33 +62,61 @@ export const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 export const txLink = (h: string) => `${EXPLORER}/tx/${h}`;
 
 declare global { interface Window { ethereum?: any } }
+import { getWalletConnect, hasWalletConnect, restoreWalletConnect, type Eip1193 } from "./wallet";
 
 export function useWallet() {
   const [account, setAccount] = useState<Address | null>(null);
+  const [provider, setProvider] = useState<Eip1193 | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const connect = useCallback(async () => {
+  /** `kind` forces a path; by default an injected wallet is used if present, else the WalletConnect picker (when configured). */
+  const connect = useCallback(async (arg?: unknown) => {
     setError(null);
-    if (!window.ethereum) { setError("No wallet found. Install MetaMask or open this page in Binance Web3 Wallet / Trust Wallet."); return null; }
+    const kind = arg === "injected" || arg === "walletconnect" ? arg : undefined; // onClick={connect} passes an event: ignore it
+    const useWC = kind === "walletconnect" || (kind !== "injected" && !window.ethereum && hasWalletConnect);
     try {
+      if (useWC) {
+        const p = await getWalletConnect();
+        await p.connect(); // opens the wallet picker (deep links on a phone, a QR code on desktop)
+        const a = p.accounts[0] as Address | undefined;
+        if (!a) throw new Error("No account was selected.");
+        setProvider(p); setAccount(a);
+        return a;
+      }
+      if (!window.ethereum) { setError("No wallet found. Install MetaMask, open this page inside your wallet app, or use the wallet picker."); return null; }
       const [a] = (await window.ethereum.request({ method: "eth_requestAccounts" })) as Address[];
       try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x61" }] }); }
       catch {
         await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x61", chainName: "BNB Smart Chain Testnet", nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, rpcUrls: ["https://bsc-testnet-rpc.publicnode.com"], blockExplorerUrls: [EXPLORER] }] });
       }
-      setAccount(a);
+      setProvider(window.ethereum); setAccount(a);
       return a;
     } catch (e) { setError((e as Error).message.split("\n")[0]); return null; }
   }, []);
 
   useEffect(() => {
-    window.ethereum?.request({ method: "eth_accounts" }).then((a: Address[]) => a[0] && setAccount(a[0])).catch(() => {});
-    const h = (a: Address[]) => setAccount(a[0] ?? null);
-    window.ethereum?.on?.("accountsChanged", h);
-    return () => window.ethereum?.removeListener?.("accountsChanged", h);
+    let stop: (() => void) | undefined;
+    (async () => {
+      const injected: Address[] = (await window.ethereum?.request({ method: "eth_accounts" }).catch(() => [])) ?? [];
+      if (injected[0]) {
+        setProvider(window.ethereum); setAccount(injected[0]);
+        const h = (a: Address[]) => setAccount(a[0] ?? null);
+        window.ethereum.on?.("accountsChanged", h);
+        stop = () => window.ethereum?.removeListener?.("accountsChanged", h);
+        return;
+      }
+      const wc = await restoreWalletConnect().catch(() => null); // a WalletConnect session from an earlier visit
+      if (wc) {
+        setProvider(wc); setAccount(wc.accounts[0] as Address);
+        const gone = () => { setAccount(null); setProvider(null); };
+        wc.on?.("disconnect", gone);
+        stop = () => wc.removeListener?.("disconnect", gone);
+      }
+    })();
+    return () => stop?.();
   }, []);
 
-  const wallet = account ? createWalletClient({ account, chain: bscTestnet, transport: custom(window.ethereum) }) : null;
+  const wallet = account && provider ? createWalletClient({ account, chain: bscTestnet, transport: custom(provider) }) : null;
   return { account, wallet, connect, error };
 }
 
