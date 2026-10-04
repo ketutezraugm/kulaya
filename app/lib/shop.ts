@@ -73,5 +73,5 @@ export function useShop(address: Address | null, everyMs = 20_000) {
 }
 
 /** Helpers shared by dashboard widgets. */
-export const dayLabel = (epoch: bigint, epochLength: bigint) => new Date(Number(epoch * epochLength) * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+export const dayLabel = (epoch: bigint, epochLength: bigint) => new Date(Number(epoch * epochLength) * 1000).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 export const sumUnits = (xs: { v: bigint }[]) => xs.reduce((a, b) => a + b.v, 0n);

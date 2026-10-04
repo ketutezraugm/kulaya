@@ -4,7 +4,7 @@
   "description": "Modal usaha, dari hasil jualan sendiri.",
   "lang": "id",
   "dir": "ltr",
-  "start_url": "/dashboard?source=pwa",
+  "start_url": "/toko?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

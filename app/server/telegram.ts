@@ -18,7 +18,7 @@ export function buildBot(): Bot {
   const b = new Bot(cfg.TELEGRAM_BOT_TOKEN);
 
   const linkPrompt = async (tgId: string) => {
-    const url = `${cfg.APP_URL}/onboard?code=${await store.newLinkCode(tgId)}`;
+    const url = `${cfg.APP_URL}/mulai?code=${await store.newLinkCode(tgId)}`;
     return { text: "Hubungkan dompet toko Anda dulu (berlaku 15 menit). Tidak perlu BNB untuk gas.", kb: new InlineKeyboard().url("Hubungkan dompet", url) };
   };
 
@@ -46,7 +46,7 @@ export function buildBot(): Bot {
     const addr = await store.linkedAddress(String(ctx.from?.id));
     if (!addr) return ctx.reply("Belum terhubung. Ketik /link");
     const f = await getFacts(chain, addr);
-    await ctx.reply(`Pelanggan: ${f.payers}\nOmzet terverifikasi: ${rupiah(f.trailingRevenue)}\nBatas pinjaman: ${rupiah(f.creditLimit)}\nTier: ${f.tier}${f.openLoan ? `\nPinjaman ${f.openLoan.status}: ${rupiah(f.openLoan.repaid)} / ${rupiah(f.openLoan.total)}` : ""}\nDashboard: ${cfg.APP_URL}/m/${addr}`);
+    await ctx.reply(`Pelanggan: ${f.payers}\nOmzet terverifikasi: ${rupiah(f.trailingRevenue)}\nBatas pinjaman: ${rupiah(f.creditLimit)}\nTier: ${f.tier}${f.openLoan ? `\nPinjaman ${f.openLoan.status}: ${rupiah(f.openLoan.repaid)} / ${rupiah(f.openLoan.total)}` : ""}\nDashboard: ${cfg.APP_URL}/t/${addr}`);
   });
 
   async function handle(ctx: any, input: UserInput) {

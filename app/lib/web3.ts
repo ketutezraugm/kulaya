@@ -68,6 +68,7 @@ export function useWallet() {
   const [account, setAccount] = useState<Address | null>(null);
   const [provider, setProvider] = useState<Eip1193 | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false); // false until the first look for an already-connected wallet is done
 
   /** `kind` forces a path; by default an injected wallet is used if present, else the WalletConnect picker (when configured). */
   const connect = useCallback(async (arg?: unknown) => {
@@ -103,6 +104,7 @@ export function useWallet() {
         const h = (a: Address[]) => setAccount(a[0] ?? null);
         window.ethereum.on?.("accountsChanged", h);
         stop = () => window.ethereum?.removeListener?.("accountsChanged", h);
+        setReady(true);
         return;
       }
       const wc = await restoreWalletConnect().catch(() => null); // a WalletConnect session from an earlier visit
@@ -112,12 +114,13 @@ export function useWallet() {
         wc.on?.("disconnect", gone);
         stop = () => wc.removeListener?.("disconnect", gone);
       }
+      setReady(true);
     })();
     return () => stop?.();
   }, []);
 
   const wallet = account && provider ? createWalletClient({ account, chain: bscTestnet, transport: custom(provider) }) : null;
-  return { account, wallet, connect, error };
+  return { account, wallet, connect, error, ready };
 }
 
 /** Send a contract write from the user's wallet and wait for the receipt. Returns the tx hash. */
@@ -133,4 +136,12 @@ export async function write(wallet: NonNullable<ReturnType<typeof useWallet>["wa
 export const errText = (e: unknown) => {
   const m = (e as any)?.shortMessage ?? (e as Error)?.message ?? String(e);
   return m.split("\n")[0].slice(0, 220);
+};
+
+/** "Rp 1,2 juta" style for hero numbers: round to 2 significant digits above a million. */
+export const rupiahFriendly = (units: bigint | number) => {
+  const rp = Number(BigInt(units) / 100n);
+  if (rp >= 1_000_000) return "Rp " + (Math.round(rp / 100_000) / 10).toString().replace(".", ",") + " juta";
+  if (rp >= 1_000) return "Rp " + Math.round(rp / 1000) + " ribu";
+  return "Rp " + rp;
 };

@@ -1,7 +1,12 @@
+import "./tokens.css";
 import "./globals.css";
+import { Bree_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { BRAND, TAGLINE_EN, TAGLINE_ID } from "@/lib/brand";
+
+const bree = Bree_Serif({ weight: "400", subsets: ["latin"], variable: "--f-bree", display: "swap" });
+const jakarta = Plus_Jakarta_Sans({ weight: ["400", "500", "600", "700", "800"], subsets: ["latin"], variable: "--f-jakarta", display: "swap" });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kulaya.vercel.app";
 const TITLE = `${BRAND}: ${TAGLINE_ID}`;
@@ -25,16 +30,8 @@ export const viewport: Viewport = { themeColor: "#1E2A5A", width: "device-width"
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <div className="wrap">
-          <nav>
-            <b>🏪 {BRAND}</b>
-            <a href="/">Home</a><a href="/dashboard">My shop</a><a href="/pool">Lend</a><a href="/agent">The AI</a><a href="/redteam">Try to break it</a>
-          </nav>
-          {children}
-        </div>
-      </body>
+    <html lang="id" className={`${bree.variable} ${jakarta.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

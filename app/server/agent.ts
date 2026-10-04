@@ -121,7 +121,7 @@ async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult
     case "create_payment_link": {
       const amount = Math.floor(Number(args.amount_rupiah));
       if (!(amount >= 5000)) return { error: "minimum payment is Rp 5.000" };
-      const url = `${chain.cfg.APP_URL}/pay/${ctx.merchant}?amount=${amount}${args.note ? `&note=${encodeURIComponent(String(args.note).slice(0, 100))}` : ""}`;
+      const url = `${chain.cfg.APP_URL}/bayar/${ctx.merchant}?amount=${amount}${args.note ? `&note=${encodeURIComponent(String(args.note).slice(0, 100))}` : ""}`;
       out.paymentLinks.push({ amountRupiah: amount, url });
       return { url, note: "a QR code of this link is sent to the owner automatically" };
     }
@@ -165,7 +165,7 @@ async function execTool(ctx: AgentCtx, name: string, args: any, out: AgentResult
       const id = (ev?.args as { loanId?: bigint } | undefined)?.loanId;
       if (rec.status !== "success" || id === undefined) return { accepted: false, error: "transaction failed", tx: hash };
       const onchain = await getLoan(chain, id); // terms are re-read from the chain, never from LLM text
-      out.loan = { id: id.toString(), acceptUrl: `${chain.cfg.APP_URL}/loan/${id}` };
+      out.loan = { id: id.toString(), acceptUrl: `${chain.cfg.APP_URL}/modal/${id}` };
       return {
         accepted: true, loan_id: id.toString(), tx: hash, accept_url: out.loan.acceptUrl, rationale_for_owner: verdict.rationale,
         terms_from_chain: { principal_rupiah: rp(onchain.principal), fee_rupiah: rp(onchain.total - onchain.principal), total_owed_rupiah: rp(onchain.total), repay_percent_of_each_sale: onchain.repayBps / 100, offer_valid_hours: Number(f.params.proposalTtl) / 3600 },
@@ -210,7 +210,7 @@ export async function runAgent(llm: LLM, ctx: AgentCtx, history: Msg[], input: U
         const bad = ungroundedFigures(out.text, msgs);
         if (!bad.length) break;
         out.trace.push({ tool: "reply_guard", args: { ungrounded: bad }, result: step < 4 ? "rejected, asking model to rewrite" : "rejected, using safe fallback" });
-        if (step >= 4) { out.text = `Maaf, saya tidak bisa memastikan angka dengan benar. Silakan cek dashboard toko Anda di ${ctx.chain.cfg.APP_URL}/m/${ctx.merchant}`; break; }
+        if (step >= 4) { out.text = `Maaf, saya tidak bisa memastikan angka dengan benar. Silakan cek dashboard toko Anda di ${ctx.chain.cfg.APP_URL}/t/${ctx.merchant}`; break; }
         msgs.push({ role: "user", internal: true, text: `SYSTEM CHECK: your reply contained figures that are not in any tool result: ${bad.join(", ")}. Rewrite it quoting only figures that appear in tool results, with no calculations of your own.` });
         continue;
       }

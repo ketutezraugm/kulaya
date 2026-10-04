@@ -1,0 +1,154 @@
+/* Kulaya design tokens v1 — owner site is the default; protocol overrides below */
+:root {
+  /* Palette */
+  --k-color-nila-900: #1E2A5A;
+  --k-color-nila-800: #25336F;
+  --k-color-nila-950: #17204A;
+  --k-color-nila-700: #2F3F86;
+  --k-color-nila-200: #C9CFEA;
+  --k-color-nila-100: #E6E9F5;
+  --k-color-kunyit-600: #D9962A;
+  --k-color-kunyit-500: #F2B33D;
+  --k-color-kunyit-200: #F9DC9E;
+  --k-color-kunyit-100: #FDF1D6;
+  --k-color-kertas: #FBF7EF;
+  --k-color-kertas-2: #F4EEE1;
+  --k-color-putih: #FFFFFF;
+  --k-color-tinta: #1B1A17;
+  --k-color-abu: #57534A;          /* 7.1:1 on kertas — AAA */
+  --k-color-garis: #E7E1D3;
+  --k-color-garis-kuat: #CBC1AC;
+  --k-color-daun-700: #17613F;     /* text, 7.4:1 on putih */
+  --k-color-daun-600: #1F7A52;     /* fills, icons */
+  --k-color-daun-100: #E2F0E7;
+  --k-color-bata-700: #8E3324;     /* text, 7.9:1 */
+  --k-color-bata-600: #B3412E;
+  --k-color-bata-100: #F7E4DF;
+  --k-color-aren-700: #7A4800;     /* text, 7.8:1 (aren-600 fails AA as text) */
+  --k-color-aren-600: #B36B00;
+  --k-color-aren-100: #F3E2C7;
+  --k-color-sawo-500: #B97A4E;     /* illustration skin only */
+  --k-color-sawo-300: #DDA77A;     /* illustration skin only */
+
+  /* Semantic */
+  --k-color-bg: var(--k-color-kertas);
+  --k-color-bg-sunk: var(--k-color-kertas-2);
+  --k-color-surface: var(--k-color-putih);
+  --k-color-text: var(--k-color-tinta);
+  --k-color-text-muted: var(--k-color-abu);
+  --k-color-heading: var(--k-color-nila-900);
+  --k-color-primary: var(--k-color-nila-900);
+  --k-color-primary-hover: var(--k-color-nila-800);
+  --k-color-primary-pressed: var(--k-color-nila-950);
+  --k-color-on-primary: var(--k-color-putih);
+  --k-color-link: var(--k-color-nila-700);
+  --k-color-accent: var(--k-color-kunyit-500);
+  --k-color-on-accent: var(--k-color-nila-900);   /* 7.4:1 */
+  --k-color-accent-soft: var(--k-color-kunyit-100);
+  --k-color-tint: var(--k-color-nila-100);
+  --k-color-success: var(--k-color-daun-700);
+  --k-color-success-soft: var(--k-color-daun-100);
+  --k-color-warning: var(--k-color-aren-700);
+  --k-color-warning-soft: var(--k-color-aren-100);
+  --k-color-danger: var(--k-color-bata-700);
+  --k-color-danger-soft: var(--k-color-bata-100);
+  --k-color-border: var(--k-color-garis);
+  --k-color-border-strong: var(--k-color-garis-kuat);
+  --k-color-ink: var(--k-color-nila-900);         /* illustration + key-card outline */
+  --k-color-focus: var(--k-color-nila-700);
+  --k-color-disabled-bg: #E9E4D8;
+  --k-color-disabled-text: #6E695F;
+
+  /* Fonts (load via next/font: Bree Serif 400; Plus Jakarta Sans 400/600/700/800; JetBrains Mono 400/600 protocol only) */
+  --k-font-display: "Bree Serif", Georgia, serif;
+  --k-font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --k-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Type — size/line-height, use as: font: 400 var(--k-text-body) var(--k-font-body) */
+  --k-text-caption: 14px/1.45;     /* floor: nothing smaller, ever */
+  --k-text-small: 16px/1.5;
+  --k-text-body: 18px/1.55;
+  --k-text-lead: 20px/1.5;
+  --k-text-button: 18px/1.2;       /* weight 600 */
+  --k-text-h3: 20px/1.3;           /* Jakarta 700 */
+  --k-text-h2: 26px/1.2;           /* Bree */
+  --k-text-h1: 32px/1.12;          /* Bree */
+  --k-text-display: 40px/1.05;     /* Bree, landing only */
+  --k-text-money-md: 24px/1.15;    /* Bree, tabular */
+  --k-text-money-lg: 32px/1.1;
+  --k-text-money-xl: 40px/1.05;
+
+  /* Space (4px base) */
+  --k-space-1: 4px;  --k-space-2: 8px;  --k-space-3: 12px; --k-space-4: 16px;
+  --k-space-5: 20px; --k-space-6: 24px; --k-space-8: 32px; --k-space-10: 40px;
+  --k-space-12: 48px; --k-space-16: 64px; --k-space-20: 80px;
+
+  /* Radius */
+  --k-radius-sm: 6px; --k-radius-md: 10px; --k-radius-lg: 16px; --k-radius-xl: 24px; --k-radius-pill: 999px;
+
+  /* Lines */
+  --k-border: 1.5px;
+  --k-border-ink: 2px;             /* key cards + illustration-matched UI */
+
+  /* Shadows — flat, honest; "stamp" is the signature offset */
+  --k-shadow-paper: 0 1px 0 var(--k-color-garis), 0 2px 8px rgba(30, 42, 90, .06);
+  --k-shadow-raised: 0 2px 0 rgba(30, 42, 90, .10), 0 10px 24px rgba(30, 42, 90, .08);
+  --k-shadow-stamp: 4px 4px 0 var(--k-color-nila-900);
+  --k-shadow-stamp-accent: 4px 4px 0 var(--k-color-kunyit-500);
+  --k-shadow-sheet: 0 -8px 24px rgba(27, 26, 23, .14);
+
+  /* Targets */
+  --k-tap-min: 48px;
+  --k-button-h: 56px;
+  --k-column-max: 560px;
+
+  /* Motion */
+  --k-ease: cubic-bezier(.2, .7, .2, 1);
+  --k-dur-fast: 120ms; --k-dur: 220ms; --k-dur-slow: 480ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --k-dur-fast: 0ms; --k-dur: 0ms; --k-dur-slow: 0ms; }
+}
+
+/* Developer & judge site */
+[data-site="protocol"] {
+  --k-text-caption: 14px/1.45;
+  --k-text-small: 14px/1.5;
+  --k-text-body: 16px/1.6;
+  --k-text-lead: 18px/1.55;
+  --k-text-button: 15px/1.2;
+  --k-text-h3: 18px/1.3;
+  --k-text-h2: 24px/1.2;
+  --k-text-h1: 36px/1.1;
+  --k-text-display: 48px/1.04;
+  --k-text-mono: 14px/1.55;
+  --k-button-h: 40px;
+  --k-tap-min: 36px;
+  --k-column-max: 1200px;
+}
+
+[data-site="protocol"][data-theme="dark"] {
+  --k-color-bg: #121731;
+  --k-color-bg-sunk: #0E1228;
+  --k-color-surface: #1A2143;
+  --k-color-text: #EDE8DC;
+  --k-color-text-muted: #B4AFA3;
+  --k-color-heading: #F5F1E8;
+  --k-color-primary: var(--k-color-kunyit-500);
+  --k-color-primary-hover: #F5C060;
+  --k-color-primary-pressed: var(--k-color-kunyit-600);
+  --k-color-on-primary: var(--k-color-nila-900);
+  --k-color-link: #C9CFEA;
+  --k-color-tint: #232B55;
+  --k-color-success: #7BCDA2;
+  --k-color-success-soft: #173A2C;
+  --k-color-warning: #E9B868;
+  --k-color-warning-soft: #3A2C14;
+  --k-color-danger: #EF9A88;
+  --k-color-danger-soft: #3D1E19;
+  --k-color-border: #2C3560;
+  --k-color-border-strong: #45508A;
+  --k-color-ink: #EDE8DC;
+  --k-shadow-stamp: 4px 4px 0 var(--k-color-kunyit-500);
+}
