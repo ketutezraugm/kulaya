@@ -33,6 +33,14 @@ The current site works, but it looks like generic AI output: a default dark them
 
 **Hackathon context:** Indonesia Web3 Hackathon 2026 (BNB Chain, Binance Academy, Coinvestasi, Dev Web3 Jogja). Kulaya is entered in all 3 tracks: **AI Agents, Finance & Commerce, Consumer Apps.** Judging covers innovation, technical execution, impact and business viability, **UX**, and presentation. Demo Day is in Yogyakarta.
 
+**Real links (use these exact URLs in mockups):**
+- Source code: **https://github.com/ketutezraugm/kulaya** (public). Linked from the developer site header and the `/protocol/contracts` and `/protocol/docs` pages. You may read its `README.md` for extra technical context.
+- Current live app: **https://kulaya.vercel.app** (your redesign replaces it).
+- Telegram bot: **https://t.me/KulayaBot**
+- Demo video: not recorded yet, so use a placeholder link labeled "Demo video".
+
+> **Don't use the current app's look as a reference.** It's the "AI slop" we're replacing. Use it, and the repo, only to understand what the product does, never for layout, colors, fonts or structure.
+
 ---
 
 ## 2. Two websites, one product
