@@ -24,7 +24,7 @@ Browser  ──────────▶ /api/{agent,sales,relay,link,redteam}
 | `NEXT_PUBLIC_SITE_URL` | optional: canonical site URL for social-preview metadata (defaults to `https://kulaya.vercel.app`) |
 | `RPC_URL` | comma-separated failover list (see `app/.env.example`) |
 | `WARUNG_ADDRESS`, `IDRX_ADDRESS`, `REPUTATION_ADAPTER`, `ERC8004_REPUTATION_REGISTRY`, `AGENT_ID`, `DEPLOY_BLOCK`, `CHAIN_ID` | from the README / deploy output |
-| `REDTEAM_MERCHANT`, `REDTEAM_RATE_LIMIT` | demo shop for `/redteam`; attempts per IP per hour |
+| `REDTEAM_MERCHANT`, `REDTEAM_RATE_LIMIT` | demo shop for `/protocol/redteam`; attempts per IP per hour |
 | `APP_URL` | the production URL (`https://kulaya.vercel.app`) (used in QR payment and loan links) |
 | `NEXT_PUBLIC_*` | public copies of the addresses (see `app/.env.example`) |
 

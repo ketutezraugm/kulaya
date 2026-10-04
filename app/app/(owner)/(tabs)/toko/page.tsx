@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Gate } from "@/components/Gate";
+import { InstallCard } from "@/components/OwnerBits";
 import { NameSheet } from "@/components/NameSheet";
 import { Art, Button, Card, Icon, Nota, Pill, Progress } from "@/components/ui";
 import * as mascot from "@/components/art/mascot";
@@ -141,6 +142,7 @@ export default function Beranda() {
                 </Card>
               )}
 
+              <InstallCard />
               <div className="cta-bar">
                 <Button kind="accent" icon="terima-bayar" href="/toko/terima" data-testid="cta-terima">{t("beranda.cta")}</Button>
               </div>

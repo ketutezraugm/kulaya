@@ -6,7 +6,7 @@
 
 Built for **Indonesia Web3 Hackathon 2026** on **BNB Smart Chain** · Tracks: **AI Agents · Finance & Commerce · Consumer Apps**
 
-> Live demo: **https://kulaya.vercel.app** · Try to break the AI: **https://kulaya.vercel.app/redteam** · Telegram bot: **[@KulayaBot](https://t.me/KulayaBot)** · Demo video: **`<VIDEO_URL>`**
+> Live demo: **https://kulaya.vercel.app** · Try to break the AI: **https://kulaya.vercel.app/protocol/redteam** · Telegram bot: **[@KulayaBot](https://t.me/KulayaBot)** · Demo video: **`<VIDEO_URL>`**
 
 ---
 
@@ -64,7 +64,7 @@ LLMs hallucinate and can be jailbroken, so **nothing the AI says is trusted**. S
 | 4 | **Reply guard:** every figure in the AI's final message must already appear in a tool result, otherwise the model must rewrite | The AI inventing or miscalculating numbers in chat | [agent.ts](app/server/agent.ts) |
 | + | **Consent comes from the chain:** the accept page shows terms read from the contract. The merchant is fixed by code, so no tool lets the model retarget a loan | Misleading chat text, prompt-injected retargeting | [app/loan/[id]](app/app/loan/%5Bid%5D/page.tsx) |
 
-**Attack it yourself:** [`/redteam`](https://kulaya.vercel.app/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
+**Attack it yourself:** [`/protocol/redteam`](https://kulaya.vercel.app/protocol/redteam) lets you jailbreak the AI, poison a payment memo, or even assume the model is *fully compromised* and hand its raw tool call to the safety layers. You can also turn the off-chain policy layer off and watch the **contract alone** revert with `ExceedsCreditCap`. It only ever *simulates* against the real contract and never sends a transaction.
 
 ```mermaid
 flowchart LR
@@ -112,7 +112,7 @@ A complete real loan cycle has been run on-chain: the AI proposed Rp 800.000, th
 contracts/   Foundry. Warung.sol (credit + pool + relayed actions), ReputationAdapter.sol, MockIDRX.sol
              33 tests: unit, fuzz, stateful invariants, relay attack cases
 app/         ONE Next.js project, deployed on Vercel
-  app/         pages: owner dashboard (/dashboard), public shop page, QR pay, loan acceptance, LP pool, AI identity, /redteam
+  app/         pages: owner site in Bahasa (/, /mulai, /toko/*, /bayar/[shop], /t/[shop], /modal/[id]) and the English judge site (/protocol/*: red-team, agent, pool, contracts, gasless, docs)
   app/api/     serverless routes: agent, sales, relay (gasless), auth + chat (wallet sign-in), link, redteam, telegram (webhook)
   server/      Gemini agent + policy layer + reply guard, relayer, keeper, Redis store, Telegram handlers
                10 policy tests (npm test)
