@@ -19,6 +19,9 @@ Read this file first. Then `docs/design/DESIGN_REVIEW.md` (what the designer del
 | New design | Delivered in `app/assets/` and **verified** (`DESIGN_REVIEW.md`). **Not implemented yet. That is the job of the next session.** |
 | Submission pieces | Pitch deck, ≤5 min demo video + script, submission form text: **not started** (the product owner wants these last). |
 
+**Baseline:** everything above is committed and pushed at `a3e8687` on `main` (working tree was clean). Start from there.
+**First 3 steps:** (1) `cd app && npm install && npx tsc --noEmit && npm test` to confirm the baseline is green; (2) `npm run features` against the live site; (3) start section 6.4 stage 1 (tokens, fonts, art pipeline).
+
 **Live URLs:** app `https://kulaya.vercel.app` · repo `https://github.com/ketutezraugm/kulaya` · bot `https://t.me/KulayaBot`.
 **Test wallets' balances (testnet):** relayer 0.039 tBNB (pays users' gas; refuses below 0.002) · AI wallet 0.007 · deployer 0.16.
 
