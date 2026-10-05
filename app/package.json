@@ -17,7 +17,11 @@
     "e2e:ui": "node e2e/ui-features.cjs",
     "e2e:pay": "node e2e/demo-pay.cjs",
     "e2e:owner": "node e2e/owner-journey.cjs",
-    "e2e:protocol": "node e2e/protocol-check.cjs"
+    "e2e:protocol": "node e2e/protocol-check.cjs",
+    "e2e:wc": "node e2e/wc-check.cjs",
+    "qa:overflow": "node e2e/overflow.cjs",
+    "balances": "tsx --env-file=.env.local scripts/balances.mts",
+    "reset-faucet": "tsx --env-file=.env.local scripts/reset-faucet-ip.mts"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",
