@@ -10,6 +10,18 @@ Built for **Indonesia Web3 Hackathon 2026** on **BNB Smart Chain** · Tracks: **
 
 ---
 
+## What it looks like
+
+The owner app is Bahasa-first and built for a phone; the judge/developer site is English.
+
+| Beranda (home) | Penawaran modal (loan offer) | Pembayaran diterima (live payment) |
+|---|---|---|
+| <img src="docs/screenshots/owner-beranda.png" width="240"> | <img src="docs/screenshots/owner-offer.png" width="240"> | <img src="docs/screenshots/owner-payment-received.png" width="240"> |
+
+Judge site: [`/protocol`](https://kulaya.vercel.app/protocol) (overview, red-team console, agent, pool, contracts, gasless, run it yourself).
+
+<img src="docs/screenshots/protocol-overview.png" width="720">
+
 ## The problem
 
 Most Indonesian *warung* owners and small sellers (UMKM) have no formal credit history, because they have no records a bank can trust. When they need working capital they turn to *pinjol* (predatory online lenders) or loan sharks. Banks won't lend, because the shop can't prove its sales.
