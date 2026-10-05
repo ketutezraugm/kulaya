@@ -24,3 +24,6 @@ app/assets/.thumbnail
 # generated video bundle (rebuild: cd app && node scripts/video-bundle.mjs)
 docs/video/bundle/
 docs/video/*.zip
+
+# exported video (large)
+*.mp4

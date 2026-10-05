@@ -1,0 +1,15 @@
+Indonesia has sixty four million small shops. Most have no records a bank will trust, so when they need stock money, they turn to predatory lending apps: rising interest, debt collectors, even reading their contacts.
+
+Koolaya gives them credit that grows from every sale. No collateral, no collectors, a flat fee written up front.
+
+Customers pay by scanning a QR. It's gasless: they only sign, and Koolaya's relayer pays the network fee. Boo Sree sees the payment arrive live, and every sale becomes a tamper-proof sales record on B N B Chain that belongs to her. On testnet today, with kris as the next step.
+
+Those sales become her credit limit: ten percent of the last thirty days, capped by her shop level. Fake sales don't help: it takes at least five different customers, and one customer counts for at most two hundred fifty thousand rupiah a day.
+
+Boo Sree just asks, even by voice note on Telegram. The AI reads her verified sales and proposes a loan. She sees exactly what she'll repay, read straight from the contract, not from the chat. One signature, no gas, and the money is in her wallet.
+
+There's no due date. Ten percent of each sale repays the loan automatically. A slow week just means slower repayment, with no penalties. When it's repaid, her level rises, and the AI's own track record is published on-chain through E R C eight thousand four.
+
+LLMs can be jailbroken, so we never trust the AI. Here we hand the safety layers a one-billion-rupiah loan, as if the model were fully compromised. The policy layer blocks it. Switch that layer off, and the smart contract still rejects it. The AI proposes. The contract decides.
+
+Koolaya is a testnet prototype today. Next comes kris through I D R X and a licensed lending partner. Try it yourself, and try to break it. Koolaya: credit that grows from every sale.
