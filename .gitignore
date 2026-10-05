@@ -20,3 +20,7 @@ skills-lock.json
 e2e/.shots/
 app/assets/screenshots/
 app/assets/.thumbnail
+
+# generated video bundle (rebuild: cd app && node scripts/video-bundle.mjs)
+docs/video/bundle/
+docs/video/*.zip
