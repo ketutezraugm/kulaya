@@ -29,3 +29,5 @@ docs/video/*.zip
 *.mp4
 video/vo-clips/
 video/*.wav
+video/vo-input/
+video/vo-mix.wav
