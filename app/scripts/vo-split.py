@@ -137,7 +137,8 @@ def main():
         cut0 = max(prev_end + (t0 - prev_end) / 2, t0 - 0.12) if ci else max(0.0, t0 - 0.12)  # mid-gap, but never more than 120 ms of lead-in
         cut1 = min(t1 + (next_start - t1) / 2, t1 + 0.30)  # mid-gap, but never more than 300 ms of tail
         f = CLIPS / f"{ci + 1:02d}.wav"
-        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(full), "-ss", f"{cut0:.3f}", "-to", f"{cut1:.3f}",
+        # input-side seek resets timestamps to 0, so the fade times below are relative to the clip (output-side -ss would leave them absolute)
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{cut0:.3f}", "-t", f"{cut1 - cut0:.3f}", "-i", str(full),
                         "-af", f"afade=t=in:d=0.012,afade=t=out:st={max(0, cut1 - cut0 - 0.04):.3f}:d=0.04", str(f)], check=True)
         timing.append({"lead": round(t0 - cut0, 3), "dur": round(cut1 - cut0, 3), "speech": round(t1 - t0, 3)})
     (CLIPS / "timing.json").write_text(json.dumps(timing, indent=1))
