@@ -106,7 +106,8 @@ export default function Pool() {
           )}
           {(err || error) && <p role="alert" style={{ color: "var(--k-color-danger)", fontWeight: 600 }}>{err || error}</p>}
         </div>
-        <p className="small">Testnet demo with mock IDRX, not financial advice. Contract <Addr a={WARUNG} />.</p>
+        <p className="small">Testnet demo with mock IDRX, not financial advice.</p>
+        <Addr a={WARUNG} />
       </Sec>
     </>
   );

@@ -80,7 +80,7 @@ function Terima({ address, shopName, minRp, onReceived }: { address: Address; sh
       <>
         <TopBar title={t("terima.title")} back="/toko" />
         <main className="shell-main" role="status" data-testid="received">
-          <Card variant="tint" pad={false}><div className="coin-drop" style={{ padding: 8 }}><Art svg={scene.illCoinDrop} /></div></Card>
+          <Card variant="tint" pad={false}><div className="coin-drop" style={{ padding: 8, display: "flex", justifyContent: "center" }}><Art svg={scene.illCoinDrop} w={180} /></div></Card>
           <Pill kind="ok">{t("terima.ok.pill")}</Pill>
           <div className="stack center" style={{ gap: 6 }}>
             <span className="money-xl" style={{ fontSize: 48 }}>{rupiah(received.amount)}</span>

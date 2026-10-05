@@ -10,7 +10,8 @@
 .p-theme, .p-menu, .p-close { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1.5px solid var(--k-color-border); background: var(--k-color-surface); border-radius: 8px; font: 600 15px/1 var(--k-font-body); color: var(--k-color-text); }
 .p-menu { display: none; }
 .p-body { display: flex; min-height: calc(100dvh - 60px); }
-.p-side { flex: none; width: 248px; border-right: 1.5px solid var(--k-color-border); padding: 24px 16px; position: sticky; top: 60px; align-self: flex-start; height: calc(100dvh - 60px); overflow: auto; }
+.p-side { flex: none; width: 248px; border-right: 1.5px solid var(--k-color-border); padding: 24px 16px; }
+.p-side .p-nav { position: sticky; top: 84px; }
 .p-nav { display: flex; flex-direction: column; gap: 4px; }
 .p-eyebrow { font: 700 12px/1 var(--k-font-mono); color: var(--k-color-text-muted); letter-spacing: .6px; padding: 0 12px 10px; }
 .p-nav a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: 10px; text-decoration: none; font: 500 15px/1.2 var(--k-font-body); color: var(--k-color-text); }
