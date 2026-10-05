@@ -27,3 +27,5 @@ docs/video/*.zip
 
 # exported video (large)
 *.mp4
+video/vo-clips/
+video/*.wav
