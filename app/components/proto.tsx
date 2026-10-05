@@ -39,7 +39,7 @@ export function PHead({ route, title, lead, art, artW = 150 }: { route: string; 
         <h1>{title}</h1>
         {lead && <p className="p-lead">{lead}</p>}
       </div>
-      {art && <Art svg={art} w={artW} className="hide-sm" />}
+      {art && <div className="p-art hide-sm"><Art svg={art} w={artW} /></div>}
     </div>
   );
 }

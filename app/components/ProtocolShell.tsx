@@ -34,7 +34,7 @@ export function ProtocolShell({ children }: { children: ReactNode }) {
       <header className="p-top">
         <div className="awning-edge strong" style={{ height: 10, backgroundSize: "13px 10px" }} />
         <div className="p-top-in">
-          <Link href="/protocol" className="row" style={{ gap: 10, textDecoration: "none" }}><Art svg={logo.logoLockup} w={108} /><span className="p-tag">Protocol</span></Link>
+          <Link href="/protocol" className="row" style={{ gap: 10, textDecoration: "none" }}><Art svg={dark ? logo.logoLockupReversed : logo.logoLockup} w={108} /><span className="p-tag">Protocol</span></Link>
           <button className="p-menu" onClick={() => setMenu(true)} aria-label="Open menu"><Icon name="beranda" size={18} />Menu</button>
           <span className="grow" />
           <a className="p-link hide-sm" href={REPO} target="_blank" rel="noreferrer"><Icon name="kode" size={18} />GitHub</a>

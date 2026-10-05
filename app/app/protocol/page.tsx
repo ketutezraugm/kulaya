@@ -62,7 +62,7 @@ export default function Overview() {
       </Sec>
 
       <Sec n="03" title="Architecture">
-        <div className="p-card" style={{ padding: 12 }}><Art svg={dev.diaArchitecture} /></div>
+        <div className="p-card p-art" style={{ padding: 12 }}><Art svg={dev.diaArchitecture} /></div>
         <div className="p-grid w3 small">
           <p><b>1-2.</b> Each payFor writes a revenue record and splits the payment. The cap is computed on-chain from trailing 30-day revenue.</p>
           <p><b>3-4.</b> The AI wallet can only call propose_loan. The owner accepts with an EIP-712 signature, which the relayer submits gaslessly.</p>

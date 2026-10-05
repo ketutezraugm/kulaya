@@ -79,3 +79,7 @@
 @media (max-width: 900px) { .p-split { grid-template-columns: minmax(0, 1fr) !important; } }
 
 @media (max-width: 900px) { .p-table { display: block; overflow-x: auto; } .p-addr { flex-wrap: wrap; } .p-main h1 { font-size: 30px; } }
+
+/* artwork is drawn in ink on paper: keep it on a paper tile in the dark theme */
+.p-art { background: #FBF7EF; border-radius: 14px; padding: 8px; display: flex; justify-content: center; }
+.p-art .icon, .p-art svg { color: #1E2A5A; }

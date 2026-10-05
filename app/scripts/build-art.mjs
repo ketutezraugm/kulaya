@@ -26,7 +26,8 @@ for (const group of readdirSync(SRC)) {
     s = (patches[name]?.(s)) ?? s;
     const p = name.replace(/[^a-z0-9]/gi, "");
     s = s.replace(/\bid="([^"]+)"/g, `id="${p}-$1"`).replace(/url\(#([^)]+)\)/g, `url(#${p}-$1)`).replace(/(href)="#([^"]+)"/g, `$1="#${p}-$2"`);
-    s = s.replace(/<svg /, '<svg aria-hidden="true" focusable="false" ').replace(/\swidth="[^"]*"/, "").replace(/\sheight="[^"]*"/, "");
+    // root tag only: size comes from the wrapper, colour (icons stroke with currentColor) from the page theme
+    s = s.replace(/<svg\b[^>]*>/, (tag) => tag.replace(/\s(width|height|color)="[^"]*"/g, "").replace("<svg", '<svg aria-hidden="true" focusable="false"'));
     ts += `export const ${JSON.stringify(camel(name)).replace(/"/g, "")} = ${JSON.stringify(s.trim())};\n`;
   }
   writeFileSync(join(OUT, group + ".ts"), ts);

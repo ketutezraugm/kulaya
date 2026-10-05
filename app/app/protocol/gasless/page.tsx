@@ -21,7 +21,7 @@ export default function Gasless() {
       <PHead route="/protocol/gasless" title="Gasless & relayer" art={scene.illWalletConfirm} artW={170}
         lead="Owners and customers never pay network fees. They sign typed data; the relayer submits it; the contract only moves value to exactly what was signed." />
 
-      <div className="p-card" style={{ padding: 12 }}><Art svg={dev.diaGasless} /></div>
+      <div className="p-card p-art" style={{ padding: 12 }}><Art svg={dev.diaGasless} /></div>
 
       <div className="p-grid w3">
         {FLOWS.map(([t, d]) => <div className="p-card" key={t}><h3 className="p-mono" style={{ fontFamily: "var(--k-font-mono)" }}>{t}</h3><p className="small">{d}</p></div>)}
