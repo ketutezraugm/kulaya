@@ -9,7 +9,9 @@
 
 ## 1. How to build it (so it can be rendered to MP4)
 
-Build the video as **one self-contained HTML page** that plays the whole timeline on a fixed 1920×1080 stage.
+**If your tool exports video directly** (e.g. an Animation template with MP4 export): export 1920×1080, 30 fps, H.264, with captions burned in, and skip the HTML-specific rules below (`__seek`, Playwright). Everything else in this document still applies.
+
+**Otherwise**, build the video as **one self-contained HTML page** that plays the whole timeline on a fixed 1920×1080 stage:
 
 - **Deterministic timeline.** Use GSAP (from `cdnjs.cloudflare.com`) or CSS animations driven by one master timeline. Expose `window.__duration` (seconds) and `window.__seek(t)` that renders the exact frame at time `t` with no randomness and no real timers. Claude Code renders it frame by frame with Playwright + ffmpeg, so playback must not depend on wall-clock time.
 - **No network** except Google Fonts (Bree Serif, Plus Jakarta Sans, JetBrains Mono) and cdnjs. All art is **inline SVG** (see §3). Never put an SVG that contains `<text>` in `<img>`: the fonts would fall back to Georgia.
