@@ -2,7 +2,7 @@
 
 Written for: the Indonesia Web3 Hackathon 2026 submission form (judges and organisers). Copy the sections the form asks for. Numbers are live testnet values as of Oct 6, 2026.
 
-**Fill in before submitting:** team names and roles (section 9). Everything else is final.
+Everything in this document is final.
 
 ---
 
@@ -124,7 +124,7 @@ To verify: open the contract on BscScan (link above), the AI agent page `/protoc
 
 ## 9. Team
 
-> **Fill in:** names, roles, and links (GitHub / LinkedIn / X) for each member. Suggested format: *Name: role, one line about what they built.*
+Solo developer: **I Ketut Ezra Hesperos Maska** (@ezrahesperos). Designed and built everything end to end: smart contracts, AI agent and safety layers, gasless relayer, owner app and judge site, Telegram bot, and the demo video. The visual design and the video's motion graphics were produced with Claude Design from a written brief and then reviewed and integrated by the developer; the voiceover uses an ElevenLabs voice.
 
 ## 10. Honest limits (we state these on screen too)
 

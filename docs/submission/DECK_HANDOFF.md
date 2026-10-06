@@ -54,7 +54,7 @@ Two columns. **Built and verified:** 33 Foundry tests · 32 TypeScript tests · 
 
 ### 8. Close
 **Headline:** Try it. Try to break it.
-Slogan again, QR codes (generate them) to **kulaya.vercel.app** and **kulaya.vercel.app/protocol/redteam**, links: t.me/KulayaBot · github.com/ketutezraugm/kulaya · demo video youtu.be/mTLAuLq-RCg. Team names and roles (**fill in**: not available to this handoff; leave a clearly labelled slot). Mascot `mascotGreet` beside the links.
+Slogan again, QR codes (generate them) to **kulaya.vercel.app** and **kulaya.vercel.app/protocol/redteam**, links: t.me/KulayaBot · github.com/ketutezraugm/kulaya · demo video youtu.be/mTLAuLq-RCg. Solo builder credit: **I Ketut Ezra Hesperos Maska (@ezrahesperos)**, with the line "Solo developer: contracts, AI agent, apps, bot and video". Mascot `mascotGreet` beside the links.
 
 ## 3. Facts you may use (verified Oct 6, 2026; do not invent others)
 
@@ -71,5 +71,5 @@ Slogan again, QR codes (generate them) to **kulaya.vercel.app** and **kulaya.ver
 - [ ] "Testnet", "not QRIS", "no real pilot" and "licensed lender" each appear (slide 7 at minimum).
 - [ ] All art inlined from the repo's cleaned SVGs; no emoji, no stock imagery.
 - [ ] Each slide has one idea, a headline that states it, and at most about 35 words of body text.
-- [ ] Speaker notes on every slide (1-3 sentences) and the team slot clearly marked until filled.
+- [ ] Speaker notes on every slide (1-3 sentences) .
 - [ ] Text contrast at least 4.5:1; code and addresses in JetBrains Mono at 14 pt or larger.
