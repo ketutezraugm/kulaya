@@ -44,7 +44,7 @@ sequenceDiagram
     participant C as Customer
     participant W as Warung contract
     participant S as Shop owner (Telegram + wallet)
-    participant AI as AI underwriter (Gemini)
+    participant AI as AI underwriter (LLM chain)
     participant P as LP pool
     participant R as ERC-8004 registry
 
@@ -80,7 +80,7 @@ LLMs hallucinate and can be jailbroken, so **nothing the AI says is trusted**. S
 
 ```mermaid
 flowchart LR
-    A[Attacker / jailbreak / poisoned memo] --> M[Gemini model]
+    A[Attacker / jailbreak / poisoned memo] --> M[LLM]
     M -->|proposed loan| P{Policy layer<br/>caps + no invented numbers}
     P -->|blocked| X1[Rejected with reason]
     P -->|passes| C{Smart contract<br/>hard caps}
@@ -126,14 +126,14 @@ contracts/   Foundry. Warung.sol (credit + pool + relayed actions), ReputationAd
 app/         ONE Next.js project, deployed on Vercel
   app/         pages: owner site in Bahasa (/, /mulai, /toko/*, /bayar/[shop], /t/[shop], /modal/[id]) and the English judge site (/protocol/*: red-team, agent, pool, contracts, gasless, docs)
   app/api/     serverless routes: agent, sales, relay (gasless), auth + chat (wallet sign-in), link, redteam, telegram (webhook)
-  server/      Gemini agent + policy layer + reply guard, relayer, keeper, Redis store, Telegram handlers
-               10 policy tests (npm test)
+  server/      LLM agent (Groq, Cerebras, Mistral, OpenRouter, Gemini failover) + policy layer + reply guard, relayer, keeper, Redis store, Telegram handlers
+               32 TypeScript tests (npm test)
   scripts/     seed the demo shop, run a full loan cycle, gasless end-to-end test
 ```
 
 ## Run it yourself
 
-Prerequisites: Node 22+, [Foundry](https://getfoundry.sh), a BSC testnet wallet with tBNB, a [Gemini API key](https://aistudio.google.com/apikey) (free tier), a Telegram bot token from @BotFather. Redis is optional locally (it falls back to memory).
+Prerequisites: Node 22+, [Foundry](https://getfoundry.sh), a BSC testnet wallet with tBNB, at least one free-tier LLM API key (Groq, Cerebras, Mistral, OpenRouter or [Gemini](https://aistudio.google.com/apikey)), a Telegram bot token from @BotFather. Redis is optional locally (it falls back to memory).
 
 ```bash
 git clone --recurse-submodules https://github.com/ketutezraugm/kulaya && cd kulaya
@@ -147,7 +147,7 @@ bash redeploy.sh                  # deploy → adapter → seed demo shop → on
 # 2. app + API + bot
 cd ../app && npm install
 cp .env.example .env.local        # add the server-side keys listed in DEPLOY.md
-npm test                          # policy tests
+npm test                          # 32 unit tests
 npm run dev                       # http://localhost:3000 (API under /api)
 ```
 

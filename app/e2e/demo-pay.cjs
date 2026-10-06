@@ -9,7 +9,7 @@ const { BASE } = require("./lib.cjs");
   await p.getByTestId("pay-amount").waitFor();
   console.log("amount shown:", await p.getByTestId("pay-amount").innerText());
   console.log("QRIS notice visible:", await p.getByText("Ini bukan QRIS").isVisible());
-  console.log("wallet deep links (no extension):", await p.getByTestId("wallet-links").isVisible());
+  console.log("wallet deep links (only without WalletConnect; hidden now that it is configured):", await p.getByTestId("wallet-links").isVisible().catch(() => false));
   await p.getByTestId("pay-demo").click();
   const ok = p.getByTestId("paid");
   const bad = p.getByTestId("pay-error");
