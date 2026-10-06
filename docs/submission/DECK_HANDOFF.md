@@ -54,7 +54,7 @@ Two columns. **Built and verified:** 33 Foundry tests · 32 TypeScript tests · 
 
 ### 8. Close
 **Headline:** Try it. Try to break it.
-Slogan again, QR codes (generate them) to **kulaya.vercel.app** and **kulaya.vercel.app/protocol/redteam**, links: t.me/KulayaBot · github.com/ketutezraugm/kulaya · demo video youtu.be/mTLAuLq-RCg. Solo builder credit: **I Ketut Ezra Hesperos Maska (@ezrahesperos)**, with the line "Solo developer: contracts, AI agent, apps, bot and video". Mascot `mascotGreet` beside the links.
+Slogan again, QR codes (generate them) to **kulaya.vercel.app** and **kulaya.vercel.app/protocol/redteam**, links: t.me/KulayaBot · github.com/ketutezraugm/kulaya · demo video youtu.be/mTLAuLq-RCg. Solo builder credit: **@ezrahesperos**, with the line "Solo developer: contracts, AI agent, apps, bot and video". Mascot `mascotGreet` beside the links.
 
 ## 3. Facts you may use (verified Oct 6, 2026; do not invent others)
 

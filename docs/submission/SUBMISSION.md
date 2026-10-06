@@ -124,7 +124,7 @@ To verify: open the contract on BscScan (link above), the AI agent page `/protoc
 
 ## 9. Team
 
-Solo developer: **I Ketut Ezra Hesperos Maska** (@ezrahesperos). Designed and built everything end to end: smart contracts, AI agent and safety layers, gasless relayer, owner app and judge site, Telegram bot, and the demo video. The visual design and the video's motion graphics were produced with Claude Design from a written brief and then reviewed and integrated by the developer; the voiceover uses an ElevenLabs voice.
+Solo developer: **@ezrahesperos**. Designed and built everything end to end: smart contracts, AI agent and safety layers, gasless relayer, owner app and judge site, Telegram bot, and the demo video. The visual design and the video's motion graphics were produced with Claude Design from a written brief and then reviewed and integrated by the developer; the voiceover uses an ElevenLabs voice.
 
 ## 10. Honest limits (we state these on screen too)
 
