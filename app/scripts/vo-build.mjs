@@ -46,6 +46,12 @@ if (env.MUSIC && existsSync(env.MUSIC)) {
   graph += `;[${n}:a]atrim=0:180,volume=0.5[m];[m][vo]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=400[duck];[duck][vo]amix=inputs=2:normalize=0:duration=first,afade=t=out:st=176:d=4[aout]`;
   map = "[aout]";
 }
+if (process.env.VO_ONLY) { // voice track only (used by av-mix.mjs); never touches any video file
+  ff(...inputs, "-filter_complex", graph, "-map", map, "-ar", "44100", join(VID, "vo-voice.wav"));
+  console.log(report.length ? ["WARNINGS:", ...report].join("\n") : "all phrases fit their captions");
+  console.log("wrote", join(VID, "vo-voice.wav"));
+  process.exit(0);
+}
 ff(...inputs, "-filter_complex", graph, "-map", map, "-ar", "44100", join(VID, "vo-mix.wav"));
 ff("-i", IN, "-i", join(VID, "vo-mix.wav"), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", OUT);
 console.log(report.length ? "WARNINGS:\n" + report.join("\n") : "all phrases fit their captions");
