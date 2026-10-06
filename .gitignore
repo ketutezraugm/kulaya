@@ -32,3 +32,5 @@ video/*.wav
 video/vo-input/
 video/vo-mix.wav
 video/
+docs/submission/deck-bundle/
+docs/submission/*.zip
