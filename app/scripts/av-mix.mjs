@@ -1,5 +1,5 @@
 // Final audio mix: voice (video/vo-voice.wav) + music (video/music.wav, ducked under the voice) + sound effects (video/sfx.wav),
-// loudness-normalized, muxed onto the video track of video/final-edited.mp4. Writes "Kulaya Demo Video - Final.mp4" in the project root.
+// loudness-normalized, muxed onto the video track of video/final-edited.mp4. Writes video/Kulaya Demo Video - Final.mp4.
 // Never overwrites final-edited.mp4. Needs ffmpeg on PATH.   Run from app/:  node scripts/av-mix.mjs
 // Tuning (optional env): MUSIC_LUFS (default -27.5), SFX_PEAK (default -9 dBFS), DUCK (sidechain ratio, default 6)
 import { execFileSync, spawnSync } from "node:child_process";
@@ -8,7 +8,7 @@ import { join } from "node:path";
 const ROOT = join(process.cwd(), "..");
 const VID = join(ROOT, "video");
 const SRC = join(VID, "final-edited.mp4");
-const OUT = join(ROOT, "Kulaya Demo Video - Final.mp4");
+const OUT = join(VID, "Kulaya Demo Video - Final.mp4");
 const voice = join(VID, "vo-voice.wav"), music = join(VID, "music.wav"), sfx = join(VID, "sfx.wav");
 const MUSIC_LUFS = parseFloat(process.env.MUSIC_LUFS ?? "-27.5"), SFX_PEAK = parseFloat(process.env.SFX_PEAK ?? "-9"), DUCK = process.env.DUCK ?? "6";
 

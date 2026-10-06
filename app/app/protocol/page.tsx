@@ -20,7 +20,7 @@ const SHIELDS = [
 export default function Overview() {
   const { data: a, error, retry } = useAgent();
   const tour: [string, string, string, string, boolean][] = [
-    ["1", "Watch the demo", "Video link is added at submission.", "#", false],
+    ["1", "Watch the demo", "3-minute walkthrough on YouTube.", "https://youtu.be/mTLAuLq-RCg", false],
     ["2", "Try the owner app", "Bahasa, phone-first. Test money only.", "/", true],
     ["3", "Try to break the AI", "Red-team console, simulation only.", "/protocol/redteam", false],
     ["4", "Read the contracts", "Addresses, parameters, tests, BscScan.", "/protocol/contracts", false],
@@ -43,7 +43,7 @@ export default function Overview() {
           {tour.map(([n, t, d, href, hi]) => {
             const inner = <><span style={{ font: "400 22px var(--k-font-display)" }}>{n}</span><b style={{ fontSize: 17 }}>{t}</b><span className="small" style={hi ? { color: "var(--k-color-nila-900)" } : undefined}>{d}</span></>;
             const style = { textDecoration: "none", color: "inherit", border: "2px solid var(--k-color-ink)", background: hi ? "var(--k-color-accent)" : "var(--k-color-surface)", boxShadow: hi ? "var(--k-shadow-stamp)" : undefined } as const;
-            return href === "#" ? <div key={n} className="p-card" style={style} aria-disabled="true">{inner}</div> : <a key={n} className="p-card" style={style} href={href}>{inner}</a>;
+            return <a key={n} className="p-card" style={style} href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}>{inner}</a>;
           })}
         </div>
       </Sec>

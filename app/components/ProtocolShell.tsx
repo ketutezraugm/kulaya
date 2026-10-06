@@ -7,6 +7,7 @@ import { Art, Icon, type IconName } from "@/components/ui";
 import { EXPLORER, WARUNG } from "@/lib/web3";
 
 const REPO = "https://github.com/ketutezraugm/kulaya";
+const VIDEO = "https://youtu.be/mTLAuLq-RCg";
 const NAV: [IconName, string, string][] = [["beranda", "Overview", "/protocol"], ["peringatan", "Red-team console", "/protocol/redteam"], ["tanya", "AI agent", "/protocol/agent"], ["modal", "Lending pool", "/protocol/pool"], ["verifikasi", "Contracts", "/protocol/contracts"], ["konfirmasi", "Gasless & relayer", "/protocol/gasless"], ["kode", "Run it yourself", "/protocol/docs"]];
 const THEME = "kulaya_protocol_theme";
 
@@ -25,6 +26,7 @@ export function ProtocolShell({ children }: { children: ReactNode }) {
         <Link key={href} href={href} aria-current={path === href ? "page" : undefined}><Icon name={i} size={18} />{label}</Link>
       ))}
       <a href={REPO} target="_blank" rel="noreferrer"><Icon name="tautan-luar" size={18} />GitHub</a>
+      <a href={VIDEO} target="_blank" rel="noreferrer"><Icon name="tautan-luar" size={18} />Demo video</a>
       <Link href="/" lang="id"><Icon name="beranda" size={18} />Owner app (Bahasa)</Link>
       <div className="p-note"><b>Testnet prototype</b><span>Mock IDRX, test money only. Not QRIS.</span></div>
     </nav>
@@ -38,6 +40,7 @@ export function ProtocolShell({ children }: { children: ReactNode }) {
           <button className="p-menu" onClick={() => setMenu(true)} aria-label="Open menu"><Icon name="beranda" size={18} />Menu</button>
           <span className="grow" />
           <a className="p-link hide-sm" href={REPO} target="_blank" rel="noreferrer"><Icon name="kode" size={18} />GitHub</a>
+          <a className="p-link hide-sm" href={VIDEO} target="_blank" rel="noreferrer"><Icon name="tautan-luar" size={18} />Demo video</a>
           <a className="p-link hide-sm" href={`${EXPLORER}/address/${WARUNG}`} target="_blank" rel="noreferrer"><Icon name="tautan-luar" size={18} />BscScan</a>
           <Link className="p-link hide-sm" href="/" lang="id" style={{ fontWeight: 700, color: "var(--k-color-link)" }}>Open the shop owner app (Bahasa)<Icon name="lanjut" size={16} /></Link>
           <span className="p-chain hide-sm"><i />BNB Smart Chain Testnet · 97</span>

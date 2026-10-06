@@ -6,7 +6,7 @@
 
 Built for **Indonesia Web3 Hackathon 2026** on **BNB Smart Chain** · Tracks: **AI Agents · Finance & Commerce · Consumer Apps**
 
-> Live demo: **https://kulaya.vercel.app** · Try to break the AI: **https://kulaya.vercel.app/protocol/redteam** · Telegram bot: **[@KulayaBot](https://t.me/KulayaBot)** · Demo video: **`<VIDEO_URL>`**
+> Live demo: **https://kulaya.vercel.app** · Try to break the AI: **https://kulaya.vercel.app/protocol/redteam** · Telegram bot: **[@KulayaBot](https://t.me/KulayaBot)** · Demo video: **[3-minute demo on YouTube](https://youtu.be/mTLAuLq-RCg)**
 
 ---
 

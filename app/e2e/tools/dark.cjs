@@ -1,6 +1,6 @@
 // Dev helper: screenshot protocol pages in dark mode (desktop) and the mobile menu.
 const { chromium } = require("playwright-core");
-const { BASE } = require("./lib.cjs");
+const { BASE } = require("../lib.cjs");
 (async () => {
   const b = await chromium.launch({ channel: "chrome", headless: true });
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });

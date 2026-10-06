@@ -9,7 +9,7 @@ const ROOT = join(process.cwd(), "..");
 const VID = join(ROOT, "video");
 const CLIPS = join(VID, "vo-clips");
 const IN = join(VID, "Kulaya Demo Video.mp4");
-const OUT = join(ROOT, "Kulaya Demo Video - VO.mp4");
+const OUT = join(VID, "vo-preview.mp4"); // voice-only preview; the finished video comes from av-mix.mjs
 const env = { ...process.env };
 if (existsSync(".env.local")) for (const l of readFileSync(".env.local", "utf8").split(/\r?\n/)) { const m = l.match(/^(MUSIC)=(.*)$/); if (m && !(m[1] in env)) env[m[1]] = m[2].trim(); }
 
