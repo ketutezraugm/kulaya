@@ -9,7 +9,9 @@ Run from `app/` (they read secrets from `.env.local`, which is git-ignored and n
 | `check.mts` | sandbox run of the real agent against the real contract (never broadcasts) |
 | `warm-cache.mts` | rebuild the contract-log index in Redis (after a redeploy or index-format change) |
 | `login-code.mts` | print a Telegram-login code for a wallet (testing `/masuk?t=...`) |
+| `seed-check.mts` | gas and test-IDRX balances of the 50 demo customer wallets (`seed -- day` refills them automatically) |
 | `balances.mts` | tBNB balances of the relayer and the AI wallet (relayer refuses to run below 0.002) |
 | `reset-faucet-ip.mts` | clear this machine's per-IP faucet counter after heavy testing |
 | `build-art.mjs` | convert the designer's SVGs in `assets/art/` to `components/art/*.ts` (metadata stripped, review fixes applied) |
 | `vo-*.py/.mjs`, `sfx-*.py`, `av-*.mjs` | demo-video audio pipeline, see `docs/video/vo/README.md` |
+| `deck-bundle.mjs` | builds the pitch-deck upload bundle (art, screens, stills, QR codes) for Claude Design, see `docs/submission/DECK_HANDOFF.md` |

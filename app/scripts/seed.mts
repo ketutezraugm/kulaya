@@ -133,6 +133,19 @@ const argTarget = process.argv[3];
 if (argTarget && !/^0x[0-9a-fA-F]{40}$/.test(argTarget)) throw new Error("bad address");
 const target = (argTarget ?? merchantAddr) as Address;
 
+/** Keep the demo customers able to pay: gas from the deployer (sequential, one funder) and test IDRX minted when low. */
+async function topUp(idx: number[]) {
+  if (!deployerKey) throw new Error("contracts/.env PRIVATE_KEY missing");
+  const gas: number[] = [];
+  for (const i of idx) if ((await c.publicClient.getBalance({ address: payerAddrs[i] })) < parseEther("0.00005")) gas.push(i);
+  if (gas.length) console.log(`topping up gas for ${gas.length} payers...`);
+  for (const i of gas) await sendTbnb(deployerKey, payerAddrs[i], "0.0005");
+  await pool(idx, 5, async (i) => {
+    const bal: bigint = await c.publicClient.readContract({ address: idrx, abi: erc20Abi, functionName: "balanceOf", args: [payerAddrs[i]] });
+    if (bal < 500_000n * RP) await send(wallets.payers[i], { address: idrx, abi: erc20Abi, functionName: "mint", args: [payerAddrs[i], 2_000_000n * RP] });
+  });
+}
+
 /** One payment per payer per epoch: the contract only counts a capped amount per payer per day, so amounts stay at/below it. */
 async function day() {
   const epoch: bigint = await c.read("currentEpoch");
@@ -144,6 +157,7 @@ async function day() {
   const already = new Set(done[slot] ?? []);
   const todo = wallets.payers.map((k, i) => ({ k, a: payerAddrs[i], i })).filter((p) => !already.has(p.a));
   console.log(`epoch ${epoch} -> ${target}: ${already.size} already paid, ${todo.length} to go`);
+  await topUp(todo.map((p) => p.i));
   await pool(todo, 5, async (p) => {
     const amount = (cap * BigInt(85 + Math.floor(Math.random() * 16))) / 100n; // 85-100% of the per-payer cap
     const memo = MEMOS[Math.floor(Math.random() * MEMOS.length)];
