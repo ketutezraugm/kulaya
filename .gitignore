@@ -36,3 +36,6 @@ docs/submission/deck-bundle/
 docs/submission/*.zip
 app/e2e/.shots/
 docs/design/hair-fix.zip
+
+# Personal notes, never published
+docs/private/
