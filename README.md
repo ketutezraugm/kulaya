@@ -178,4 +178,6 @@ Solidity 0.8.28 · Foundry · OpenZeppelin 5 · ERC-8004 · EIP-712 / EIP-2612 �
 
 ## License
 
-MIT
+Copyright (c) 2026 I Ketut Ezra Hesperos Maska. All rights reserved.
+
+This repository is public to read, not to reuse: no part of it may be copied, modified, distributed or used without written permission. See [LICENSE](LICENSE) for details, including third-party components and versions published earlier under MIT.

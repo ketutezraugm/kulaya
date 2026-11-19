@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
+// Copyright (c) 2026 I Ketut Ezra Hesperos Maska. All rights reserved. See LICENSE.
 pragma solidity ^0.8.24;
 
 import {IAgentReputation} from "./Warung.sol";

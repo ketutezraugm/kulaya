@@ -1,21 +1,30 @@
-MIT License
+Copyright (c) 2026 I Ketut Ezra Hesperos Maska. All rights reserved.
 
-Copyright (c) 2026 Kulaya contributors
+Kulaya (formerly "Warung Agent"), including its source code, smart contracts,
+documentation, text, designs, illustrations, logo and other assets in this
+repository, is the property of I Ketut Ezra Hesperos Maska.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This repository is public so that others can read it. That is the only
+permission granted. You may not copy, modify, distribute, sublicense, sell,
+deploy or otherwise use any part of it, in whole or in part, for any purpose,
+without prior written permission from the copyright holder.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Viewing and forking this repository on GitHub is allowed only as far as
+GitHub's Terms of Service require. Such a fork grants no other rights.
+
+Third-party components keep their own licences and are not covered by this
+notice. These include the git submodules under contracts/lib
+(OpenZeppelin Contracts and forge-std, both MIT), npm packages, and the fonts
+used (Bree Serif, Plus Jakarta Sans and JetBrains Mono, under the SIL Open
+Font License).
+
+Versions of this repository published before 19 November 2026 were released
+under the MIT License. Copies obtained from those earlier versions remain
+under that licence. This notice applies to this version and all later ones.
+
+For permission or licensing enquiries, contact the copyright holder through
+GitHub: https://github.com/ketutezraugm
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
